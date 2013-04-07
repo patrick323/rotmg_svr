@@ -78,7 +78,16 @@ namespace wServer.realm.entities
             }
             try
             {
-                command.Execute(this, args);
+                if (command.RequirePerm)
+                {
+                    if (this.CmdReqAdmin())
+                    {   
+                    command.Execute(this, args);
+                    }
+                }
+                else
+                    command.Execute(this, args);
+                
             }
             catch
             {

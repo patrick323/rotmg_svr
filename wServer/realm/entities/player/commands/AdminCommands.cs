@@ -8,6 +8,8 @@ using wServer.realm.setpieces;
 
 namespace wServer.realm.entities.player.commands
 {
+
+
     class SpawnCommand : ICommand
     {
         public string Command { get { return "spawn"; } }
@@ -271,4 +273,224 @@ namespace wServer.realm.entities.player.commands
             });
         }
     }
+    class KillAll : ICommand
+    {
+        public string Command { get { return "killall"; } }
+        public bool RequirePerm { get { return true; } }
+
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {                
+                 foreach (var i in player.Owner.Enemies)
+                    {                        
+                        if ((i.Value.ObjectDesc != null )&&                              
+                            (i.Value.ObjectDesc.ObjectId != null ) &&
+                            (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
+                        {                        
+                          // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
+                           i.Value.Owner.LeaveWorld(i.Value);
+                        }
+                 }
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot killall!"
+                });                
+            }
+        }
+    }
+
+    class KillAllX : ICommand //this version gives XP points, but does not work for enemies with evaluation/inv periods
+    {
+        public string Command { get { return "killallx"; } }
+        public bool RequirePerm { get { return true; } }
+
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {
+                foreach (var i in player.Owner.Enemies)
+                {
+                    if ((i.Value.ObjectDesc != null) &&
+                        (i.Value.ObjectDesc.ObjectId != null) &&
+                        (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
+                    {
+                        i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches, 
+                        //i.Value.Owner.LeaveWorld(i.Value);
+                    }
+                }
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot killall!"
+                });
+            }
+        }
+    }
+
+
+    class Kick : ICommand
+    {
+        public string Command { get { return "kick"; } }
+        public bool RequirePerm { get { return true; } }
+
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {
+                World world = RealmManager.GetWorld(World.VAULT_ID); 
+                foreach (var i in player.Owner.Players)
+                {
+                      
+                    if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
+                    {                                          
+                      i.Value.Client.SendPacket(new ReconnectPacket()
+            {
+                Host = "",
+                Port = 2050,
+                GameId = world.Id,
+                Name = world.Name,
+                Key = Empty<byte>.Array,
+            });               
+                    
+                    }                                                              
+                }
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot kick!"
+                });
+            }
+        }
+    }
+
+    class GetQuest : ICommand
+    {
+        public string Command { get { return "getquest"; } }
+        public bool RequirePerm { get { return true; } }
+        
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {
+                player.Owner.BroadcastPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "Quest",
+                    Text = "Loc: " + player.Quest.X + " " + player.Quest.Y
+                }, null);
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot find quest!"
+                });
+            }
+        }
+    }
+
+     class OryxSay : ICommand
+    {
+        public string Command { get { return "oryxsay"; } }
+        public bool RequirePerm { get { return true; } }     
+
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {
+                string saytext = string.Join(" ", args);
+
+                player.Owner.BroadcastPacket(new TextPacket()
+                {
+                    Name = "#" + "Oryx the Mad God",
+                    ObjectId = 0x0932,
+                    Stars = -1,
+                    BubbleTime = 0,
+                    Recipient = "",
+                    Text = saytext,
+                    CleanText = ""
+                }, null);
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot say that!"
+                });
+            }
+        }
+    }
+
+     class ListCommands : ICommand
+     {
+         public string Command { get { return "commands"; } }
+         public bool RequirePerm { get { return true; } }
+
+         public void Execute(Player player, string[] args)
+         {
+             try
+             {
+                     Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
+                             var t = typeof(ICommand);
+                             foreach (var i in t.Assembly.GetTypes())
+                                 if (t.IsAssignableFrom(i) && i != t)
+                                 {
+                                     var instance = (ICommand)Activator.CreateInstance(i);
+                                     cmds.Add(instance.Command, instance);
+                                 }                         
+
+                 StringBuilder sb = new StringBuilder("Commands: ");
+                 var copy = cmds.Values.ToArray();
+                 for (int i = 0; i < copy.Length; i++)
+                 {
+                     if (i != 0) sb.Append(", ");
+                     sb.Append(copy[i].Command);
+                 }
+
+                 player.Client.SendPacket(new TextPacket()
+                 {
+                     BubbleTime = 0,
+                     Stars = -1,
+                     Name = "",
+                     Text = sb.ToString()
+                 });
+             }
+             catch
+             {
+                 player.Client.SendPacket(new TextPacket()
+                 {
+                     BubbleTime = 0,
+                     Stars = -1,
+                     Name = "",
+                     Text = "Cannot say that!"
+                 });
+             }
+         }
+     }
+
+
 }
