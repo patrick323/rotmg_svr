@@ -8,21 +8,20 @@ namespace wServer.logic
 {
     public abstract class Behavior
     {
-        public bool? Tick(Entity host, RealmTime time)
+        public void Tick(Entity host, RealmTime time)
         {
             object state;
             if (!host.StateStorage.TryGetValue(this, out state))
                 state = null;
 
-            bool? ret = TickCore(host, time, ref state);
+            TickCore(host, time, ref state);
 
             if (state == null)
                 host.StateStorage.Remove(this);
             else
                 host.StateStorage[this] = state;
-            return ret;
         }
-        protected abstract bool? TickCore(Entity host, RealmTime time, ref object state);
+        protected abstract void TickCore(Entity host, RealmTime time, ref object state);
 
         public void OnStateEntry(Entity host, RealmTime time)
         {

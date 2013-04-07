@@ -10,38 +10,40 @@ namespace wServer.logic.behaviors
     {
         //State storage: none
 
-        Behavior[] children;
-        public Prioritize(params Behavior[] children)
+        CycleBehavior[] children;
+        public Prioritize(params CycleBehavior[] children)
         {
             this.children = children;
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             int index;
             if (state == null) index = -1;
             else index = (int)state;
 
-            if (index == -1)    //select
+            if (index < 0)    //select
             {
+                index = 0;
                 for (int i = 0; i < children.Length; i++)
-                    if (children[i].Tick(host, time) ?? false)
+                {
+                    children[i].Tick(host, time);
+                    if (children[i].Status == CycleStatus.InProgress)
                     {
                         index = i;
-                        return null;
+                        break;
                     }
+                }
             }
             else                //run a cycle
             {
-                if (children[index].Tick(host, time) ?? false)
+                children[index].Tick(host, time);
+                if (children[index].Status == CycleStatus.Completed ||
+                    children[index].Status == CycleStatus.NotStarted)
                     index = -1;
             }
 
             state = index;
-            return null;
-
-
-            return false;
         }
     }
 }

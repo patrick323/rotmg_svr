@@ -14,7 +14,7 @@ namespace wServer.logic
         {
             Tuple<State, Loot> def;
             if (Definitions.TryGetValue(entity.ObjectType, out def))
-                entity.CurrentState = def.Item1;
+                entity.SwitchTo(def.Item1);
         }
 
         public static void ResolveLoot(Enemy enemy)

@@ -8,7 +8,7 @@ using wServer.realm.entities;
 
 namespace wServer.logic.behaviors
 {
-    class Protect : Behavior
+    class Protect : CycleBehavior
     {
         //State storage: protect state
         enum ProtectState
@@ -23,7 +23,7 @@ namespace wServer.logic.behaviors
         float acquireRange;
         float protectionRange;
         float reprotectRange;
-        public Protect(double speed, string protectee, double acquireRange = 10, double protectionRange = 3, double reprotectRange = 1.5)
+        public Protect(double speed, string protectee, double acquireRange = 10, double protectionRange = 2, double reprotectRange = 1)
         {
             this.speed = (float)speed;
             this.protectee = XmlDatas.IdToType[protectee];
@@ -32,15 +32,15 @@ namespace wServer.logic.behaviors
             this.reprotectRange = (float)reprotectRange;
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             ProtectState s;
             if (state == null) s = ProtectState.DontKnowWhere;
             else s = (ProtectState)state;
 
-            bool ret = false;
-
-            if (host.HasConditionEffect(ConditionEffects.Paralyzed)) return true;
+            Status = CycleStatus.NotStarted;
+            
+            if (host.HasConditionEffect(ConditionEffects.Paralyzed)) return;
 
             var entity = host.GetNearestEntity(acquireRange, protectee);
             Vector2 vect;
@@ -62,14 +62,17 @@ namespace wServer.logic.behaviors
                     vect = new Vector2(entity.X - host.X, entity.Y - host.Y);
                     if (vect.Length() > reprotectRange)
                     {
+                        Status = CycleStatus.InProgress;
                         vect.Normalize();
                         float dist = host.GetSpeed(speed) * (time.thisTickTimes / 1000f);
                         host.ValidateAndMove(host.X + vect.X * dist, host.Y + vect.Y * dist);
                         host.UpdateCount++;
-                        ret = true;
                     }
                     else
+                    {
+                        Status = CycleStatus.Completed;
                         s = ProtectState.Protected;
+                    }
                     break;
                 case ProtectState.Protected:
                     if (entity == null)
@@ -77,6 +80,7 @@ namespace wServer.logic.behaviors
                         s = ProtectState.DontKnowWhere;
                         break;
                     }
+                    Status = CycleStatus.Completed;
                     vect = new Vector2(entity.X - host.X, entity.Y - host.Y);
                     if (vect.Length() > protectionRange)
                     {
@@ -88,7 +92,6 @@ namespace wServer.logic.behaviors
             }
 
             state = s;
-            return ret;
         }
     }
 }

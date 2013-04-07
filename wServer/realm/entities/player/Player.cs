@@ -281,16 +281,6 @@ namespace wServer.realm.entities
             }
             if (!KeepAlive(time)) return;
 
-
-            var tile = Owner.Map[(int)X, (int)Y];
-            Client.SendPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",
-                Text = tile.Elevation.ToString()
-            });
-
             if (Boost == null) CalcBoost();
 
             CheckTradeTimeout(time);

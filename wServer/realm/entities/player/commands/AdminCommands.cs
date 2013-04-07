@@ -225,7 +225,7 @@ namespace wServer.realm.entities.player.commands
                 : base(0x0d5d)
             {
                 this.player = player;
-                CurrentState = logic.State.NullState;
+                SwitchTo(logic.State.NullState);
                 ApplyConditionEffect(new ConditionEffect()
                 {
                     Effect = ConditionEffectIndex.Invincible,

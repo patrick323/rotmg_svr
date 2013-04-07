@@ -19,15 +19,13 @@ namespace wServer.logic.behaviors
             this.index = index;
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             if ((host as Enemy).AltTextureIndex != index)
             {
                 (host as Enemy).AltTextureIndex = index;
                 host.UpdateCount++;
-                return true;
             }
-            return false;
         }
     }
 }

@@ -8,7 +8,7 @@ using wServer.svrPackets;
 
 namespace wServer.logic.behaviors
 {
-    class Shoot : Behavior
+    class Shoot : CycleBehavior
     {
         //State storage: cooldown timer
 
@@ -18,12 +18,14 @@ namespace wServer.logic.behaviors
         double? fixedAngle;
         double angleOffset;
         double? defaultAngle;
+        double predictive;
         int projectileIndex;
         Cooldown coolDown;
 
-        public Shoot(double radius, int count = 1, double? shootAngle = null, 
-            int projectileIndex = 0, double? fixedAngle = null, double angleOffset = 0,
-            double? defaultAngle = null, Cooldown coolDown = new Cooldown())
+        public Shoot(double radius, int count = 1, double? shootAngle = null,
+            int projectileIndex = 0, double? fixedAngle = null,
+            double angleOffset = 0, double? defaultAngle = null,
+            double predictive = 0, Cooldown coolDown = new Cooldown())
         {
             this.radius = radius;
             this.count = count;
@@ -32,19 +34,39 @@ namespace wServer.logic.behaviors
             this.angleOffset = angleOffset * Math.PI / 180;
             this.defaultAngle = defaultAngle * Math.PI / 180;
             this.projectileIndex = projectileIndex;
+            this.predictive = predictive;
             this.coolDown = coolDown.Normalize();
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
+        protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {
-            int cool;
-            if (state == null) cool = coolDown.Next(Random);
-            else cool = (int)state;
+            state = 0;
+        }
 
-            bool ret = false;
+        static double Predict(Entity host, Entity target, ProjectileDesc desc)
+        {
+            Position? history = target.TryGetHistory(100);
+            if (history == null)
+                return 0;
+
+            var originalAngle = Math.Atan2(history.Value.Y - host.Y, history.Value.X - host.X);
+            var newAngle = Math.Atan2(target.Y - host.Y, target.X - host.X);
+
+
+            var bulletSpeed = desc.Speed / 100f;
+            var dist = BehaviorUtils.Dist(target, host);
+            var angularVelo = (newAngle - originalAngle) / (100 / 1000f);
+            return angularVelo * bulletSpeed;
+        }
+
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
+        {
+            int cool = (int)state;
+            Status = CycleStatus.NotStarted;
+
             if (cool <= 0)
             {
-                if (host.HasConditionEffect(ConditionEffects.Stunned)) return true;
+                if (host.HasConditionEffect(ConditionEffects.Stunned)) return;
 
                 Entity player = host.GetNearestEntity(radius, null);
                 if (player != null || defaultAngle != null || fixedAngle != null)
@@ -53,6 +75,8 @@ namespace wServer.logic.behaviors
 
                     var a = fixedAngle ?? (player == null ? defaultAngle.Value : Math.Atan2(player.Y - host.Y, player.X - host.X));
                     a += angleOffset;
+                    if (predictive != 0 && player != null)
+                        a += Predict(host, player, desc) * predictive;
 
                     int dmg;
                     if (host is Character)
@@ -84,15 +108,17 @@ namespace wServer.logic.behaviors
                         AngleIncrement = (float)shootAngle,
                         NumShots = (byte)count,
                     }, null);
-                    ret = true;
                 }
                 cool = coolDown.Next(Random);
+                Status = CycleStatus.Completed;
             }
             else
+            {
                 cool -= time.thisTickTimes;
+                Status = CycleStatus.InProgress;
+            }
 
             state = cool;
-            return ret;
         }
     }
 }

@@ -3,157 +3,187 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ Shore = Behav()
-            .Init(0x600, Behaves("Pirate",
-                    IfNot.Instance(
-                        Chasing.Instance(8.5f, 6, 0, null), SimpleWandering.Instance(4)),
-                    Cooldown.Instance(2500, SimpleAttack.Instance(3)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.2, (ILoot)new TierLoot(1, ItemType.Weapon)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x601, Behaves("Piratess",
-                    IfNot.Instance(
-                        Once.Instance(
-                            SpawnMinionImmediate.Instance(0x600, 3, 2, 5)
+            .Init("Pirate",
+                    new State(
+                        new Prioritize(
+                            new Follow(0.85, range: 1, duration: 1000, coolDown: 0),
+                            new Wander(0.4)
                         ),
-                        IfNot.Instance(
-                            Chasing.Instance(11f, 6, 1, null),
-                            SimpleWandering.Instance(6))
+                        new Shoot(3, coolDown: 2500)
                     ),
-                    Cooldown.Instance(2500, SimpleAttack.Instance(3)),
-                    Rand.Instance(
-                        Reproduce.Instance(0x600, 5),
-                        Reproduce.Instance(0x601, 5)
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.2, (ILoot)new TierLoot(1, ItemType.Armor)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x602, Behaves("Snake",
-                    SimpleWandering.Instance(6),
-                    Cooldown.Instance(2000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x604, Behaves("Scorpion Queen",
-                    IfNot.Instance(
-                        Once.Instance(
-                            SpawnMinionImmediate.Instance(0x603, 3, 5, 10)
+                    new TierLoot(1, ItemType.Weapon, 0.2),
+                    new ItemLoot("Health Potion", 0.03)
+                )
+            .Init("Piratess",
+                    new State(
+                        new Prioritize(
+                            new Follow(1.1, range: 1, duration: 3000, coolDown: 1500),
+                            new Wander(0.6)
                         ),
-                        SmoothWandering.Instance(1, 3)
+                        new Shoot(3, coolDown: 2500),
+                        new Reproduce("Pirate", densityMax: 5),
+                        new Reproduce("Piratess", densityMax: 5)
                     ),
-                    reproduce: Reproduce.Instance(0x603, 10),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x603, Behaves("Poison Scorpion",
-                    IfNot.Instance(
-                        Chasing.Instance(4, 8, 1, 0x604), SimpleWandering.Instance(4)),
-                    Cooldown.Instance(2000, SimpleAttack.Instance(8))))
-            .Init(0x953, Behaves("Bandit Leader",
-                    IfNot.Instance(
-                        Once.Instance(
-                            SpawnMinionImmediate.Instance(0x0954, 2, 3, 5)
+                    new TierLoot(1, ItemType.Armor, 0.2),
+                    new ItemLoot("Health Potion", 0.03)
+                )
+            .Init("Snake",
+                    new State(
+                        new Wander(0.8),
+                        new Shoot(10, coolDown: 2000),
+                        new Reproduce(densityMax: 5)
+                    ),
+                    new ItemLoot("Health Potion", 0.03),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+            .Init("Poison Scorpion",
+                    new State(
+                        new Prioritize(
+                            new Protect(0.4, "Scorpion Queen"),
+                            new Wander(0.4)
                         ),
-                        IfNot.Instance(
-                            If.Instance(
-                                Escaping.Instance(4, 5, 80, null),
-                                True.Instance(Once.Instance(new SimpleTaunt(
-                                    "Forget this... run for it!")))
+                        new Shoot(8, coolDown: 2000)
+                    )
+                )
+            .Init("Scorpion Queen",
+                    new State(
+                        new Wander(0.2),
+                        new Spawn("Poison Scorpion"),
+                        new Reproduce("Poison Scorpion", coolDown: 10000, densityMax: 10),
+                        new Reproduce(densityMax: 2, densityRadius: 40)
+                    ),
+                    new ItemLoot("Health Potion", 0.03),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+            .Init("Bandit",
+                    new State(
+                        new State("fast_follow",
+                            new Shoot(3),
+                            new Prioritize(
+                                new Protect(0.6, "Bandit Leader", acquireRange: 9, protectionRange: 7, reprotectRange: 3),
+                                new Follow(1, range: 1),
+                                new Wander(0.6)
                             ),
-                            IfNot.Instance(
-                                Chasing.Instance(4, 6, 1, null),
-                                SimpleWandering.Instance(4)
-                            )
-                        )
-                    ),
-                    Rand.Instance(
-                        Cooldown.Instance(1000,
-                            SimpleAttack.Instance(8)
+                            new TimedTransition(3000, "scatter1")
                         ),
-                        If.Instance(
-                            Cooldown.Instance(2500, ThrowAttack.Instance(2, 5, 12)),
-                            new RandomTaunt(0.1, "Catch!")
-                        )
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.2, (ILoot)new TierLoot(1, ItemType.Weapon)),
-                            Tuple.Create(0.1, (ILoot)new TierLoot(2, ItemType.Weapon)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(1, ItemType.Armor)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x954, Behaves("Bandit",
-                    IfNot.Instance(
-                        IfNot.Instance(
-                            Chasing.Instance(8, 6, 3, 0x953),
-                            Chasing.Instance(8, 6, 0, null)
+                        new State("scatter1",
+                            new Prioritize(
+                                new Protect(0.6, "Bandit Leader", acquireRange: 9, protectionRange: 7, reprotectRange: 3),
+                                new Wander(1),
+                                new Wander(0.6)
+                            ),
+                            new TimedTransition(2000, "slow_follow")
                         ),
-                        SimpleWandering.Instance(4)
+                        new State("slow_follow",
+                            new Shoot(4.5),
+                            new Prioritize(
+                                new Protect(0.6, "Bandit Leader", acquireRange: 9, protectionRange: 7, reprotectRange: 3),
+                                new Follow(0.5, acquireRange: 9, range: 3.5, duration: 4000),
+                                new Wander(0.5)
+                            ),
+                            new TimedTransition(3000, "scatter2")
+                        ),
+                        new State("scatter2",
+                            new Prioritize(
+                                new Protect(0.6, "Bandit Leader", acquireRange: 9, protectionRange: 7, reprotectRange: 3),
+                                new Wander(1),
+                                new Wander(0.6)
+                            ),
+                            new TimedTransition(2000, "fast_follow")
+                        ),
+                        new State("escape",
+                            new StayBack(0.5, 8),
+                            new TimedTransition(15000, "fast_follow")
+                        )
+                    )
+                )
+            .Init("Bandit Leader",
+                    new State(
+                        new Spawn("Bandit", coolDown: 8000, maxChildren: 4),
+
+                        new State("bold",
+                            new State("warn_about_grenades",
+                                new Taunt("Catch!", probability: 0.15),
+                                new TimedTransition(400, "wimpy_grenade1")
+                            ),
+                            new State("wimpy_grenade1",
+                                new Grenade(1.4, 12, coolDown: 10000),
+                                new Prioritize(
+                                    new StayAbove(0.3, 7),
+                                    new Wander(0.3)
+                                ),
+                                new TimedTransition(2000, "wimpy_grenade2")
+                            ),
+                            new State("wimpy_grenade2",
+                                new Grenade(1.4, 12, coolDown: 10000),
+                                new Prioritize(
+                                    new StayAbove(0.5, 7),
+                                    new Wander(0.5)
+                                ),
+                                new TimedTransition(3000, "slow_follow")
+                            ),
+                            new State("slow_follow",
+                                new Shoot(13, coolDown: 1000),
+                                new Prioritize(
+                                    new StayAbove(0.4, 7),
+                                    new Follow(0.4, acquireRange: 9, range: 3.5, duration: 4000),
+                                    new Wander(0.4)
+                                ),
+                                new TimedTransition(4000, "warn_about_grenades")
+                            ),
+                            new HpLessTransition(0.45, "meek")
+                        ),
+                        new State("meek",
+                            new Taunt("Forget this... run for it!", probability: 0.5),
+                            new StayBack(0.5, 6),
+                            new Order(10, "Bandit", "escape"),
+
+                            new TimedTransition(12000, "bold")
+                        )
                     ),
-                    Cooldown.Instance(2000,
-                        Rand.Instance(
-                            SimpleAttack.Instance(8, 0),
-                            SimpleAttack.Instance(8, 1)
-                        )
-                    )
-                ))
-            .Init(0x60e, Behaves("Red Gelatinous Cube",
-                    SimpleWandering.Instance(4),
-                    Cooldown.Instance(1000, MultiAttack.Instance(5, 10 * (float)Math.PI / 180, 2)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x60f, Behaves("Purple Gelatinous Cube",
-                    SimpleWandering.Instance(4),
-                    Cooldown.Instance(600, SimpleAttack.Instance(5)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x610, Behaves("Green Gelatinous Cube",
-                    SimpleWandering.Instance(4),
-                    Cooldown.Instance(1800, RingAttack.Instance(5, 5)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ));
+                    new TierLoot(1, ItemType.Weapon, 0.2),
+                    new TierLoot(1, ItemType.Armor, 0.2),
+                    new TierLoot(2, ItemType.Weapon, 0.12),
+                    new TierLoot(2, ItemType.Armor, 0.12),
+                    new ItemLoot("Health Potion", 0.12),
+                    new ItemLoot("Magic Potion", 0.14)
+                )
+            .Init("Red Gelatinous Cube",
+                    new State(
+                        new Shoot(8, count: 2, shootAngle: 10, predictive: 0.2, coolDown: 1000),
+                        new Wander(0.4),
+                        new Reproduce(densityMax: 5)
+                    ),
+                    new ItemLoot("Health Potion", 0.04),
+                    new ItemLoot("Magic Potion", 0.04)
+                )
+            .Init("Purple Gelatinous Cube",
+                    new State(
+                        new Shoot(8, predictive: 0.2, coolDown: 600),
+                        new Wander(0.4),
+                        new Reproduce(densityMax: 5)
+                    ),
+                    new ItemLoot("Health Potion", 0.04),
+                    new ItemLoot("Magic Potion", 0.04)
+                )
+            .Init("Green Gelatinous Cube",
+                    new State(
+                        new Shoot(8, count: 5, shootAngle: 72, predictive: 0.2, coolDown: 1800),
+                        new Wander(0.4),
+                        new Reproduce(densityMax: 5)
+                    ),
+                    new ItemLoot("Health Potion", 0.04),
+                    new ItemLoot("Magic Potion", 0.04)
+                )
+                ;
     }
 }

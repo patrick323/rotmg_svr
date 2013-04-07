@@ -159,7 +159,7 @@ namespace wServer.logic
 
         public static float GetSpeed(this Entity entity, float spd)
         {
-            return 6.25f * spd + 5 / 6f;
+            return 5.55f * spd + 0.74f;
         }
 
         public static bool ValidateAndMove(this Entity entity, float x, float y)

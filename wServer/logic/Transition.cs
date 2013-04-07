@@ -23,7 +23,7 @@ namespace wServer.logic
 
             var ret = TickCore(host, time, ref state);
             if (ret)
-                host.CurrentState = TargetState;
+                host.SwitchTo(TargetState);
 
             if (state == null)
                 host.StateStorage.Remove(this);

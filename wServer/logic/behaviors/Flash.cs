@@ -21,8 +21,7 @@ namespace wServer.logic.behaviors
             this.flashRepeats = flashRepeats;
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
-        { return null; }
+        protected override void TickCore(Entity host, RealmTime time, ref object state) { }
 
         protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {

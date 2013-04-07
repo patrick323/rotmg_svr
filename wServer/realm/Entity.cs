@@ -146,8 +146,20 @@ namespace wServer.realm
                 return states;
             }
         }
-        public State CurrentState { get; set; }
-        bool stateEntry = true;
+        public State CurrentState { get; private set; }
+        public void SwitchTo(State state)
+        {
+            CurrentState = state;
+            stateEntry = state;
+            if (Owner != null)
+                Owner.BroadcastPacket(new NotificationPacket()
+                {
+                    ObjectId = Id,
+                    Color = new ARGB(0xFF00FF00),
+                    Text = state.Name
+                }, null);
+        }
+        State stateEntry = null;
         void TickState(RealmTime time)
         {
             State state = CurrentState;
@@ -155,25 +167,25 @@ namespace wServer.realm
             while (state.States.Count > 0)  //always the first deepest sub-state
                 state = CurrentState = state.States[0];
 
+            bool entry = stateEntry != null;
             while (state != null)
             {
+                if (stateEntry != null && state == stateEntry.Parent)
+                    entry = false;
                 foreach (var i in state.Behaviors)
                 {
-                    if (stateEntry)
+                    if (entry)
                         i.OnStateEntry(this, time);
                     i.Tick(this, time);
                 }
                 foreach (var i in state.Transitions)
                 {
                     if (i.Tick(this, time))
-                    {
-                        stateEntry = true;
                         return;
-                    }
                 }
                 state = state.Parent;
             }
-            stateEntry = false;
+            stateEntry = null;
         }
 
 

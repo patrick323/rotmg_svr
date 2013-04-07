@@ -11,26 +11,26 @@ namespace wServer.logic.behaviors
     {
         //State storage: index
 
-        Behavior[] children;
-        public Sequence(params Behavior[] children)
+        CycleBehavior[] children;
+        public Sequence(params CycleBehavior[] children)
         {
             this.children = children;
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             int index;
             if (state == null) index = 0;
             else index = (int)state;
 
-            if (children[index].Tick(host, time) ?? false)
+            children[index].Tick(host, time);
+            if (children[index].Status == CycleStatus.Completed)
             {
                 index++;
                 if (index == children.Length) index = 0;
             }
 
             state = index;
-            return null;
         }
     }
 }

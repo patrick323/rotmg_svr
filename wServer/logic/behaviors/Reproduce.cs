@@ -24,13 +24,12 @@ namespace wServer.logic.behaviors
             this.coolDown = coolDown.Normalize(60000);
         }
 
-        protected override bool? TickCore(Entity host, RealmTime time, ref object state)
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             int cool;
             if (state == null) cool = coolDown.Next(Random);
             else cool = (int)state;
 
-            bool ret = false;
             if (cool <= 0)
             {
                 int count = host.CountEntity(densityRadius, children ?? host.ObjectType);
@@ -65,7 +64,6 @@ namespace wServer.logic.behaviors
                 cool -= time.thisTickTimes;
 
             state = cool;
-            return ret;
         }
     }
 }
