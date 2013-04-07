@@ -283,7 +283,7 @@ namespace wServer.realm.entities
                                 case StatsType.Dexterity: idx = 7; break;
                             }
                             int s = eff.Amount;
-                            Behavior.AOE(Owner, this, eff.Range / 2, true, player =>
+                            this.AOE(eff.Range / 2, true, player =>
                             {
                                 (player as Player).Boost[idx] += s;
                                 player.UpdateCount++;
@@ -318,7 +318,7 @@ namespace wServer.realm.entities
                         } break;
                     case ActivateEffects.ConditionEffectAura:
                         {
-                            Behavior.AOE(Owner, this, eff.Range / 2, true, player =>
+                            this.AOE(eff.Range / 2, true, player =>
                             {
                                 ApplyConditionEffect(new ConditionEffect()
                                 {
@@ -346,7 +346,7 @@ namespace wServer.realm.entities
                     case ActivateEffects.HealNova:
                         {
                             List<Packet> pkts = new List<Packet>();
-                            Behavior.AOE(Owner, this, eff.Range / 2, true, player =>
+                            this.AOE(eff.Range / 2, true, player =>
                             {
                                 ActivateHealHp(player as Player, eff.Amount, pkts);
                             });
@@ -368,7 +368,7 @@ namespace wServer.realm.entities
                     case ActivateEffects.MagicNova:
                         {
                             List<Packet> pkts = new List<Packet>();
-                            Behavior.AOE(Owner, this, eff.Range / 2, true, player =>
+                            this.AOE(eff.Range / 2, true, player =>
                             {
                                 ActivateHealMp(player as Player, eff.Amount, pkts);
                             });
@@ -431,13 +431,13 @@ namespace wServer.realm.entities
 
                             int totalDmg = 0;
                             var enemies = new List<Enemy>();
-                            Behavior.AOE(Owner, target, eff.Radius, false, enemy =>
+                            Owner.AOE(target, eff.Radius, false, enemy =>
                             {
                                 enemies.Add(enemy as Enemy);
                                 totalDmg += (enemy as Enemy).Damage(this, time, eff.TotalDamage, false);
                             });
                             var players = new List<Player>();
-                            Behavior.AOE(Owner, this, eff.Radius, true, player =>
+                            this.AOE(eff.Radius, true, player =>
                             {
                                 players.Add(player as Player);
                                 ActivateHealHp(player as Player, totalDmg, pkts);
@@ -492,7 +492,7 @@ namespace wServer.realm.entities
                                 PosB = new Position() { X = target.X + 3, Y = target.Y },
                                 Color = new ARGB(0xffffffff)
                             });
-                            Behavior.AOE(Owner, target, 3, false, enemy =>
+                            Owner.AOE(target, 3, false, enemy =>
                             {
                                 if (enemy.HasConditionEffect(ConditionEffects.StasisImmune))
                                 {
@@ -548,7 +548,7 @@ namespace wServer.realm.entities
                             Enemy start = null;
                             double angle = Math.Atan2(target.Y - Y, target.X - X);
                             double diff = Math.PI / 3;
-                            Behavior.AOE(Owner, target, 6, false, enemy =>
+                            Owner.AOE(target, 6, false, enemy =>
                             {
                                 if (!(enemy is Enemy)) return;
                                 var x = Math.Atan2(enemy.Y - Y, enemy.X - X);
@@ -566,12 +566,11 @@ namespace wServer.realm.entities
                             for (int i = 0; i < targets.Length; i++)
                             {
                                 targets[i] = current;
-                                float dist = 8;
-                                Enemy next = Behavior.GetNearestEntity(current, ref dist, false,
+                                Enemy next = current.GetNearestEntity(8, false,
                                     enemy =>
                                         enemy is Enemy &&
                                         Array.IndexOf(targets, enemy) == -1 &&
-                                        Behavior.Dist(this, enemy) <= 6) as Enemy;
+                                        BehaviorUtils.Dist(this, enemy) <= 6) as Enemy;
 
                                 if (next == null) break;
                                 else current = next;
@@ -626,13 +625,13 @@ namespace wServer.realm.entities
                                     PosA = new Position() { X = eff.Radius }
                                 }, null);
                                 List<Enemy> enemies = new List<Enemy>();
-                                Behavior.AOE(world, target, eff.Radius, false,
+                                Owner.AOE(target, eff.Radius, false,
                                     enemy => PoisonEnemy(enemy as Enemy, eff));
                             }));
                         } break;
                     case ActivateEffects.RemoveNegativeConditions:
                         {
-                            Behavior.AOE(Owner, this, eff.Range / 2, true, player =>
+                            this.AOE(eff.Range / 2, true, player =>
                             {
                                 ApplyConditionEffect(NegativeEffs);
                             });

@@ -16,23 +16,22 @@ namespace wServer.realm.setpieces
 
         static readonly byte Floor = (byte)XmlDatas.IdToType["Scorch Blend"];
 
-        static readonly LootDef chest = new LootDef(0, 0, 0, 0,
-                Tuple.Create(0.2, (ILoot)new TierLoot(5, ItemType.Weapon)),
-                Tuple.Create(0.1, (ILoot)new TierLoot(6, ItemType.Weapon)),
-                Tuple.Create(0.01, (ILoot)new TierLoot(7, ItemType.Weapon)),
+        protected static readonly Loot chest = new Loot(
+                new TierLoot(5, ItemType.Weapon, 0.3),
+                new TierLoot(6, ItemType.Weapon, 0.2),
+                new TierLoot(7, ItemType.Weapon, 0.1),
 
-                Tuple.Create(0.2, (ILoot)new TierLoot(4, ItemType.Armor)),
-                Tuple.Create(0.1, (ILoot)new TierLoot(5, ItemType.Armor)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(6, ItemType.Armor)),
+                new TierLoot(4, ItemType.Armor, 0.3),
+                new TierLoot(5, ItemType.Armor, 0.2),
+                new TierLoot(6, ItemType.Armor, 0.1),
 
-                Tuple.Create(0.2, (ILoot)new TierLoot(2, ItemType.Ability)),
-                Tuple.Create(0.01, (ILoot)new TierLoot(3, ItemType.Ability)),
+                new TierLoot(2, ItemType.Ability, 0.3),
+                new TierLoot(3, ItemType.Ability, 0.2),
 
-                Tuple.Create(0.15, (ILoot)new TierLoot(1, ItemType.Ring)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(2, ItemType.Ring)),
+                new TierLoot(1, ItemType.Ring, 0.25),
+                new TierLoot(2, ItemType.Ring, 0.15),
 
-                Tuple.Create(0.1, (ILoot)HpPotionLoot.Instance),
-                Tuple.Create(0.1, (ILoot)MpPotionLoot.Instance)
+                new TierLoot(1, ItemType.Potion, 0.5)
             );
 
         Random rand = new Random();
@@ -58,14 +57,8 @@ namespace wServer.realm.setpieces
             world.EnterWorld(lord);
 
             Container container = new Container(0x0501, null, false);
-            int count = rand.Next(5, 8);
-            List<Item> items = new List<Item>();
-            while (items.Count < count)
-            {
-                Item item = chest.GetRandomLoot(rand);
-                if (item != null) items.Add(item);
-            }
-            for (int i = 0; i < items.Count; i++)
+            Item[] items = chest.GetLoots(5, 8).ToArray();
+            for (int i = 0; i < items.Length; i++)
                 container.Inventory[i] = items[i];
             container.Move(pos.X + 15.5f, pos.Y + 15.5f);
             world.EnterWorld(container);

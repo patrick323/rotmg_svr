@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.logic.loot;
+using wServer.logic;
 
 namespace wServer.realm.setpieces
 {
@@ -20,21 +21,22 @@ namespace wServer.realm.setpieces
         protected static readonly short Grass = XmlDatas.IdToType["Jungle Grass"];
         protected static readonly short Tree = XmlDatas.IdToType["Jungle Tree Big"];
 
-        protected static readonly LootDef chest = new LootDef(0, 0, 0, 0,
-                Tuple.Create(0.1, (ILoot)new TierLoot(4, ItemType.Weapon)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(5, ItemType.Weapon)),
+        protected static readonly Loot chest = new Loot(
+                new TierLoot(4, ItemType.Weapon, 0.3),
+                new TierLoot(5, ItemType.Weapon, 0.2),
 
-                Tuple.Create(0.1, (ILoot)new TierLoot(4, ItemType.Armor)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(5, ItemType.Armor)),
+                new TierLoot(4, ItemType.Armor, 0.3),
+                new TierLoot(5, ItemType.Armor, 0.2),
 
-                Tuple.Create(0.1, (ILoot)new TierLoot(1, ItemType.Ability)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(2, ItemType.Ability)),
+                new TierLoot(1, ItemType.Ability, 0.25),
+                new TierLoot(2, ItemType.Ability, 0.15),
 
-                Tuple.Create(0.1, (ILoot)new TierLoot(2, ItemType.Ring)),
-                Tuple.Create(0.01, (ILoot)new TierLoot(3, ItemType.Ring)),
+                new TierLoot(2, ItemType.Ring, 0.3),
+                new TierLoot(3, ItemType.Ring, 0.2),
 
-                Tuple.Create(0.05, (ILoot)HpPotionLoot.Instance),
-                Tuple.Create(0.05, (ILoot)MpPotionLoot.Instance)
+                new TierLoot(1, ItemType.Potion, 0.5),
+                new TierLoot(1, ItemType.Potion, 0.5),
+                new TierLoot(1, ItemType.Potion, 0.5)
             );
 
         protected static void Render(Temple temple, World world, IntPoint pos, int[,] ground, int[,] objs)

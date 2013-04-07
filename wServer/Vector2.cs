@@ -294,7 +294,9 @@ namespace Mono.Game
 
         public void Normalize()
         {
-			float val = 1.0f / (float)Math.Sqrt((X * X) + (Y * Y));
+            float d = (float)Math.Sqrt((X * X) + (Y * Y));
+            if (d == 0) return;
+            float val = 1.0f / d;
 			X *= val;
 			Y *= val;
         }

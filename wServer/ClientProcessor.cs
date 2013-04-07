@@ -28,6 +28,8 @@ namespace wServer
         public RC4 ReceiveKey { get; private set; }
         public RC4 SendKey { get; private set; }
 
+        public Socket Socket { get { return skt; } }
+
         public ClientProcessor(Socket skt)
         {
             this.skt = skt;
@@ -68,55 +70,55 @@ namespace wServer
                 else if (pkt.ID == PacketID.Pong)
                     entity.Pong(pkt as PongPacket);
                 else if (pkt.ID == PacketID.Move)
-                    RealmManager.Network.AddPendingAction(this, t => entity.Move(t, pkt as MovePacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.Move(t, pkt as MovePacket));
                 else if (pkt.ID == PacketID.PlayerShoot)
-                    RealmManager.Network.AddPendingAction(this, t => entity.PlayerShoot(t, pkt as PlayerShootPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.PlayerShoot(t, pkt as PlayerShootPacket));
                 else if (pkt.ID == PacketID.EnemyHit)
-                    RealmManager.Network.AddPendingAction(this, t => entity.EnemyHit(t, pkt as EnemyHitPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.EnemyHit(t, pkt as EnemyHitPacket));
                 else if (pkt.ID == PacketID.OtherHit)
-                    RealmManager.Network.AddPendingAction(this, t => entity.OtherHit(t, pkt as OtherHitPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.OtherHit(t, pkt as OtherHitPacket));
                 else if (pkt.ID == PacketID.SquareHit)
-                    RealmManager.Network.AddPendingAction(this, t => entity.SquareHit(t, pkt as SquareHitPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.SquareHit(t, pkt as SquareHitPacket));
                 else if (pkt.ID == PacketID.PlayerHit)
-                    RealmManager.Network.AddPendingAction(this, t => entity.PlayerHit(t, pkt as PlayerHitPacket));
-                else if (pkt.ID == PacketID.ShootAck)
+                    RealmManager.Logic.AddPendingAction(t => entity.PlayerHit(t, pkt as PlayerHitPacket));
+                else if (pkt.ID == PacketID.ShootAck)   //TODO: this one is spammed when lots of bullet, special handle?
                     RealmManager.Network.AddPendingAction(this, t => entity.ShootAck(t, pkt as ShootAckPacket));
                 else if (pkt.ID == PacketID.InvSwap)
-                    RealmManager.Network.AddPendingAction(this, t => entity.InventorySwap(t, pkt as InvSwapPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.InventorySwap(t, pkt as InvSwapPacket));
                 else if (pkt.ID == PacketID.InvDrop)
-                    RealmManager.Network.AddPendingAction(this, t => entity.InventoryDrop(t, pkt as InvDropPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.InventoryDrop(t, pkt as InvDropPacket));
                 else if (pkt.ID == PacketID.UseItem)
-                    RealmManager.Network.AddPendingAction(this, t => entity.UseItem(t, pkt as UseItemPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.UseItem(t, pkt as UseItemPacket));
                 else if (pkt.ID == PacketID.UsePortal)
                     RealmManager.Network.AddPendingAction(this, t => entity.UsePortal(t, pkt as UsePortalPacket));
                 else if (pkt.ID == PacketID.PlayerText)
-                    RealmManager.Network.AddPendingAction(this, t => entity.PlayerText(t, pkt as PlayerTextPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.PlayerText(t, pkt as PlayerTextPacket));
                 else if (pkt.ID == PacketID.ChooseName)
-                    RealmManager.Network.AddPendingAction(this, t => ProcessChooseNamePacket(pkt as ChooseNamePacket));
+                    ProcessChooseNamePacket(pkt as ChooseNamePacket);
                 else if (pkt.ID == PacketID.Escape)
                     ProcessEscapePacket(pkt as EscapePacket);
                 else if (pkt.ID == PacketID.Teleport)
-                    RealmManager.Network.AddPendingAction(this, t => entity.Teleport(t, pkt as TeleportPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.Teleport(t, pkt as TeleportPacket));
                 else if (pkt.ID == PacketID.GotoAck)
-                    RealmManager.Network.AddPendingAction(this, t => entity.GotoAck(t, pkt as GotoAckPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.GotoAck(t, pkt as GotoAckPacket));
                 else if (pkt.ID == PacketID.EditAccountList)
-                    RealmManager.Network.AddPendingAction(this, t => entity.EditAccountList(t, pkt as EditAccountListPacket));
+                    entity.EditAccountList(pkt as EditAccountListPacket);
                 else if (pkt.ID == PacketID.Buy)
-                    RealmManager.Network.AddPendingAction(this, t => entity.Buy(t, pkt as BuyPacket));
+                    entity.Buy(pkt as BuyPacket);
                 else if (pkt.ID == PacketID.RequestTrade)
-                    RealmManager.Network.AddPendingAction(this, t => entity.RequestTrade(t, pkt as RequestTradePacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.RequestTrade(t, pkt as RequestTradePacket));
                 else if (pkt.ID == PacketID.ChangeTrade)
-                    RealmManager.Network.AddPendingAction(this, t => entity.ChangeTrade(t, pkt as ChangeTradePacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.ChangeTrade(t, pkt as ChangeTradePacket));
                 else if (pkt.ID == PacketID.AcceptTrade)
-                    RealmManager.Network.AddPendingAction(this, t => entity.AcceptTrade(t, pkt as AcceptTradePacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.AcceptTrade(t, pkt as AcceptTradePacket));
                 else if (pkt.ID == PacketID.CancelTrade)
-                    RealmManager.Network.AddPendingAction(this, t => entity.CancelTrade(t, pkt as CancelTradePacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.CancelTrade(t, pkt as CancelTradePacket));
                 else if (pkt.ID == PacketID.AOEAck)
-                    RealmManager.Network.AddPendingAction(this, t => entity.AOEAck(t, pkt as AOEAckPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.AOEAck(t, pkt as AOEAckPacket));
                 else if (pkt.ID == PacketID.GroundDamage)
-                    RealmManager.Network.AddPendingAction(this, t => entity.GroundDamage(t, pkt as GroundDamagePacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.GroundDamage(t, pkt as GroundDamagePacket));
                 else if (pkt.ID == PacketID.CheckCredits)
-                    RealmManager.Network.AddPendingAction(this, t => entity.CheckCredits(t, pkt as CheckCreditsPacket));
+                    entity.CheckCredits(pkt as CheckCreditsPacket);
                 else if (pkt.ID != PacketID.Packet)
                 {
                     Console.WriteLine("Unhandled packet: " + pkt.ToString());
@@ -174,6 +176,19 @@ namespace wServer
         int targetWorld = -1;
         void ProcessHelloPacket(HelloPacket pkt)
         {
+            if (!skt.RemoteEndPoint.ToString().StartsWith("127.0.0.1"))
+            {
+                SendPacket(new svrPackets.TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "*Error*",
+                    Text = "You should not be here!"
+                });
+                Disconnect();
+                return;
+            }
+
             db = new Database();
             if ((account = db.Verify(pkt.GUID, pkt.Password)) == null)
             {
@@ -184,6 +199,7 @@ namespace wServer
                     {
                         Message = "Invalid account."
                     });
+                    Disconnect();
                     return;
                 }
             }
@@ -194,6 +210,7 @@ namespace wServer
                 {
                     Message = "Failed to connect."
                 });
+                Disconnect();
             }
             else
             {
@@ -204,6 +221,7 @@ namespace wServer
                     {
                         Message = "Invalid world."
                     });
+                    Disconnect();
                 }
                 else
                 {
@@ -247,7 +265,10 @@ namespace wServer
             int currChar = (int)(long)cmd.ExecuteScalar();
 
             if (currChar >= maxChar)
+            {
                 Disconnect();
+                return;
+            }
 
             character = Database.CreateCharacter(pkt.ObjectType, nextCharId);
 

@@ -226,9 +226,7 @@ namespace wServer.realm.entities.player.commands
                 : base(0x0d5d)
             {
                 this.player = player;
-                MovementBehavior = wServer.logic.NullBehavior.Instance;
-                AttackBehavior = wServer.logic.NullBehavior.Instance;
-                ReproduceBehavior = wServer.logic.NullBehavior.Instance;
+                CurrentState = logic.State.NullState;
                 ApplyConditionEffect(new ConditionEffect()
                 {
                     Effect = ConditionEffectIndex.Invincible,
@@ -246,6 +244,31 @@ namespace wServer.realm.entities.player.commands
         public void Execute(Player player, string[] args)
         {
             player.Owner.EnterWorld(new Locater(player));
+        }
+    }
+
+    class AllOnlineCommand : ICommand
+    {
+        public string Command { get { return "online"; } }
+        public bool RequirePerm { get { return true; } }
+
+        public void Execute(Player player, string[] args)
+        {
+            StringBuilder sb = new StringBuilder("Users online: \r\n");
+            var copy = RealmManager.Clients.Values.ToArray();
+            for (int i = 0; i < copy.Length; i++)
+            {
+                if (copy[i].Stage == ProtocalStage.Disconnected) continue;
+                sb.AppendFormat("{0}@{1}\r\n", copy[i].Account.Name, copy[i].Socket.RemoteEndPoint.ToString());
+            }
+
+            player.Client.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "",
+                Text = sb.ToString()
+            });
         }
     }
 }

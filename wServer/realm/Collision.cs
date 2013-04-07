@@ -148,12 +148,12 @@ namespace wServer.realm
                 obj.CollisionNode.Remove();
         }
 
-        public IEnumerable<T> HitTest(Position pos, float radius)
+        public IEnumerable<T> HitTest(Position pos, double radius)
         {
             return HitTest(pos.X, pos.Y, radius);
         }
 
-        public IEnumerable<T> HitTest(double _x, double _y, float radius)
+        public IEnumerable<T> HitTest(double _x, double _y, double radius)
         {
             int xl = Math.Max(0, (int)(_x - radius) / CHUNK_SIZE);
             int xh = Math.Min(cW - 1, (int)(_x + radius) / CHUNK_SIZE);
@@ -198,7 +198,7 @@ namespace wServer.realm
                         for (int i = -ACTIVE_RADIUS; i <= ACTIVE_RADIUS; i++)
                             for (int j = -ACTIVE_RADIUS; j <= ACTIVE_RADIUS; j++)
                             {
-                                if (x + j < 0 || x + j > cW || y + i < 0 || y + i > cH)
+                                if (x + j < 0 || x + j >= cW || y + i < 0 || y + i >= cH)
                                     continue;
                                 var node = this.chunks[x + j, y + i];
                                 while (node != null)

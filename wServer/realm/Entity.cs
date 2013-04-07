@@ -9,7 +9,7 @@ using wServer.svrPackets;
 
 namespace wServer.realm
 {
-    public class Entity : IBehaviorHost, IProjectileOwner, ICollidable<Entity>
+    public class Entity : IProjectileOwner, ICollidable<Entity>
     {
         public Entity(short objType)
             : this(objType, true)
@@ -130,19 +130,53 @@ namespace wServer.realm
             if (interactive && Owner != null)
             {
                 if (!HasConditionEffect(ConditionEffects.Stasis))
-                {
-                    MovementBehavior.Tick(this, time);
-                    AttackBehavior.Tick(this, time);
-                    ReproduceBehavior.Tick(this, time);
-                }
-                foreach (var i in CondBehaviors)
-                    if ((i.Condition & BehaviorCondition.Other) != 0 &&
-                        i.ConditionMeet(this))
-                        i.Behave(BehaviorCondition.Other, this, time, null);
+                    TickState(time);
                 posHistory[posIdx++] = new Position() { X = X, Y = Y };
                 ProcessConditionEffects(time);
             }
         }
+
+
+        Dictionary<object, object> states;
+        public IDictionary<object, object> StateStorage
+        {
+            get
+            {
+                if (states == null) states = new Dictionary<object, object>();
+                return states;
+            }
+        }
+        public State CurrentState { get; set; }
+        bool stateEntry = true;
+        void TickState(RealmTime time)
+        {
+            State state = CurrentState;
+            if (state == null) return;
+            while (state.States.Count > 0)  //always the first deepest sub-state
+                state = CurrentState = state.States[0];
+
+            while (state != null)
+            {
+                foreach (var i in state.Behaviors)
+                {
+                    if (stateEntry)
+                        i.OnStateEntry(this, time);
+                    i.Tick(this, time);
+                }
+                foreach (var i in state.Transitions)
+                {
+                    if (i.Tick(this, time))
+                    {
+                        stateEntry = true;
+                        return;
+                    }
+                }
+                state = state.Parent;
+            }
+            stateEntry = false;
+        }
+
+
         public Position? TryGetHistory(long timeAgo)
         {
             if (posHistory == null) return null;
@@ -218,23 +252,7 @@ namespace wServer.realm
             }
         }
 
-        Dictionary<int, object> states;
-        IDictionary<int, object> IBehaviorHost.StateStorage
-        {
-            get
-            {
-                if (states == null) states = new Dictionary<int, object>();
-                return states;
-            }
-        }
-        Entity IBehaviorHost.Self { get { return this; } }
         Entity IProjectileOwner.Self { get { return this; } }
-
-        public Behavior AttackBehavior { get; set; }
-        public Behavior MovementBehavior { get; set; }
-        public Behavior ReproduceBehavior { get; set; }
-        public ConditionalBehavior[] CondBehaviors { get; set; }
-
 
         Projectile[] projectiles;
         Projectile[] IProjectileOwner.Projectiles { get { return projectiles; } }

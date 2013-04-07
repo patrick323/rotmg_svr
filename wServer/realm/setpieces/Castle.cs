@@ -18,24 +18,23 @@ namespace wServer.realm.setpieces
         protected static readonly short WallA = XmlDatas.IdToType["Grey Wall"];
         protected static readonly short WallB = XmlDatas.IdToType["Destructible Grey Wall"];
 
-        protected static readonly LootDef chest = new LootDef(0, 0, 0, 0,
-                Tuple.Create(0.2, (ILoot)new TierLoot(6, ItemType.Weapon)),
-                Tuple.Create(0.1, (ILoot)new TierLoot(7, ItemType.Weapon)),
-                Tuple.Create(0.01, (ILoot)new TierLoot(8, ItemType.Weapon)),
+        protected static readonly Loot chest = new Loot(
+                new TierLoot(6, ItemType.Weapon, 0.3),
+                new TierLoot(7, ItemType.Weapon, 0.2),
+                new TierLoot(8, ItemType.Weapon, 0.1),
 
-                Tuple.Create(0.2, (ILoot)new TierLoot(5, ItemType.Armor)),
-                Tuple.Create(0.1, (ILoot)new TierLoot(6, ItemType.Armor)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(7, ItemType.Armor)),
+                new TierLoot(5, ItemType.Armor, 0.3),
+                new TierLoot(6, ItemType.Armor, 0.2),
+                new TierLoot(7, ItemType.Armor, 0.1),
 
-                Tuple.Create(0.2, (ILoot)new TierLoot(2, ItemType.Ability)),
-                Tuple.Create(0.1, (ILoot)new TierLoot(3, ItemType.Ability)),
-                Tuple.Create(0.01, (ILoot)new TierLoot(4, ItemType.Ability)),
+                new TierLoot(2, ItemType.Ability, 0.3),
+                new TierLoot(3, ItemType.Ability, 0.2),
+                new TierLoot(4, ItemType.Ability, 0.1),
 
-                Tuple.Create(0.15, (ILoot)new TierLoot(2, ItemType.Ring)),
-                Tuple.Create(0.05, (ILoot)new TierLoot(3, ItemType.Ring)),
-
-                Tuple.Create(0.1, (ILoot)HpPotionLoot.Instance),
-                Tuple.Create(0.1, (ILoot)MpPotionLoot.Instance)
+                new TierLoot(2, ItemType.Ring, 0.25),
+                new TierLoot(3, ItemType.Ring, 0.15),
+                
+                new TierLoot(1, ItemType.Potion, 0.5)
             );
 
         Random rand = new Random();
@@ -171,14 +170,8 @@ namespace wServer.realm.setpieces
                     else if (t[x, y] == 7)
                     {
                         Container container = new Container(0x0501, null, false);
-                        int count = rand.Next(5, 8);
-                        List<Item> items = new List<Item>();
-                        while (items.Count < count)
-                        {
-                            Item item = chest.GetRandomLoot(rand);
-                            if (item != null) items.Add(item);
-                        }
-                        for (int i = 0; i < items.Count; i++)
+                        Item[] items = chest.GetLoots(5, 8).ToArray();
+                        for (int i = 0; i < items.Length; i++)
                             container.Inventory[i] = items[i];
                         container.Move(pos.X + x + 0.5f, pos.Y + y + 0.5f);
                         world.EnterWorld(container);

@@ -24,7 +24,7 @@ namespace wServer.logic
             this.enemy = enemy;
         }
 
-        public void HitBy(Player player, Projectile projectile, int dmg)
+        public void HitBy(Player player, RealmTime time, Projectile projectile, int dmg)
         {
             int totalDmg;
             if (!hitters.TryGetValue(player, out totalDmg))
@@ -36,6 +36,9 @@ namespace wServer.logic
             LastHitter = player;
 
             player.FameCounter.Hit(projectile, enemy);
+
+            if (ProjectileHit != null)
+                ProjectileHit(this, new TimeEventArgs(time));
         }
 
         public Tuple<Player, int>[] GetPlayerData()
@@ -51,7 +54,7 @@ namespace wServer.logic
             return dat.ToArray();
         }
 
-        public void Death()
+        public void Death(RealmTime time)
         {
             if (Corpse != null)
             {
@@ -96,8 +99,14 @@ namespace wServer.logic
                 (Parent ?? this).LastHitter.FameCounter.LevelUpAssist(lvUps);
             }
 
+            if (Dead != null)
+                Dead(this, new TimeEventArgs(time));
+
             if (enemy.Owner is GameWorld)
                 (enemy.Owner as GameWorld).EnemyKilled(enemy, (Parent ?? this).LastHitter);
         }
+
+        public event EventHandler<TimeEventArgs> ProjectileHit;
+        public event EventHandler<TimeEventArgs> Dead;
     }
 }

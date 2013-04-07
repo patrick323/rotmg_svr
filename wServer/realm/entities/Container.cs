@@ -20,6 +20,7 @@ namespace wServer.realm.entities
         {
             Inventory = new Item[12];
             SlotTypes = new int[12];
+            BagOwners = new int[0];
         }
 
         public Container(XElement node)
@@ -33,11 +34,12 @@ namespace wServer.realm.entities
                 Array.Resize(ref inv, 12);
                 Inventory = inv;
             }
+            BagOwners = new int[0];
         }
 
         public int[] SlotTypes { get; private set; }
         public Item[] Inventory { get; private set; }
-        public int? BagOwner { get; set; }
+        public int[] BagOwners { get; set; }
 
         protected override void ImportStats(StatsType stats, object val)
         {
@@ -55,7 +57,7 @@ namespace wServer.realm.entities
                 case StatsType.Inventory9: Inventory[9] = (int)val == -1 ? null : XmlDatas.ItemDescs[(short)(int)val]; break;
                 case StatsType.Inventory10: Inventory[10] = (int)val == -1 ? null : XmlDatas.ItemDescs[(short)(int)val]; break;
                 case StatsType.Inventory11: Inventory[11] = (int)val == -1 ? null : XmlDatas.ItemDescs[(short)(int)val]; break;
-                case StatsType.OwnerAccountId: BagOwner = (int)val == -1 ? (int?)null : (int)val; break;
+                case StatsType.OwnerAccountId: break;// BagOwner = (int)val == -1 ? (int?)null : (int)val; break;
             }
             base.ImportStats(stats, val);
         }
@@ -73,7 +75,7 @@ namespace wServer.realm.entities
             stats[StatsType.Inventory9] = (Inventory[9] != null ? Inventory[9].ObjectType : -1);
             stats[StatsType.Inventory10] = (Inventory[10] != null ? Inventory[10].ObjectType : -1);
             stats[StatsType.Inventory11] = (Inventory[11] != null ? Inventory[11].ObjectType : -1);
-            stats[StatsType.OwnerAccountId] = BagOwner ?? -1;
+            stats[StatsType.OwnerAccountId] = BagOwners.Length == 1 ? BagOwners[0] : -1;
             base.ExportStats(stats);
         }
 
