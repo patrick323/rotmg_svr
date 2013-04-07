@@ -136,7 +136,7 @@ namespace wServer
                                 receiveState = ReceiveState.Processing;
                                 bool cont = OnPacketReceived(pkt);
 
-                                if (cont)
+                                if (cont && skt.Connected)
                                 {
                                     receiveState = ReceiveState.ReceivingHdr;
                                     e.SetBuffer(0, 5);

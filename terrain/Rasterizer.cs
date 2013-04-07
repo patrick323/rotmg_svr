@@ -34,6 +34,11 @@ namespace terrain
         {
             Buffer[(int)x, (int)y] = val;
         }
+        public void Transform(double x, double y, Func<T, T> transform)
+        {
+            var v = Buffer[(int)x, (int)y];
+            Buffer[(int)x, (int)y] = transform(v);
+        }
         public void PlotSqr(double x, double y, T val, int w)
         {
             switch (w)
@@ -51,6 +56,27 @@ namespace terrain
                         for (int _y = 0; _y < w; _y++)
                         {
                             Buffer[(int)x + _x, (int)y + _y] = val;
+                        }
+                    break;
+            }
+        }
+        public void TransformSqr(double x, double y, Func<T, T> transform, int w)
+        {
+            switch (w)
+            {
+                case 0: return;
+                case 1:
+                    Buffer[(int)x, (int)y] = transform(Buffer[(int)x, (int)y]); break;
+                case 2:
+                    Buffer[(int)x, (int)y] = transform(Buffer[(int)x, (int)y]);
+                    Buffer[(int)x + 1, (int)y] = transform(Buffer[(int)x + 1, (int)y]);
+                    Buffer[(int)x, (int)y + 1] = transform(Buffer[(int)x, (int)y + 1]);
+                    Buffer[(int)x + 1, (int)y + 1] = transform(Buffer[(int)x + 1, (int)y + 1]); break;
+                default:
+                    for (int _x = 0; _x < w; _x++)
+                        for (int _y = 0; _y < w; _y++)
+                        {
+                            Buffer[(int)x + _x, (int)y + _y] = transform(Buffer[(int)x + _x, (int)y + _y]);
                         }
                     break;
             }
@@ -151,6 +177,10 @@ namespace terrain
 
         public void DrawLineBresenham(double x1, double y1, double x2, double y2, T val, int width)
         {
+            DrawLineBresenham(x1, y1, x2, y2, t => val, width);
+        }
+        public void DrawLineBresenham(double x1, double y1, double x2, double y2, Func<T, T> transform, int width)
+        {
             // Use refs for faster access (really important!) speeds up a lot!
             int w = Width;
             int h = Height;
@@ -211,7 +241,7 @@ namespace terrain
             double error = el / 2;
             if (y < h && y >= 0 && x < w && x >= 0)
             {
-                Plot(x, y, val);
+                Transform(x, y, transform);
             }
 
             // Set limit
@@ -263,7 +293,7 @@ namespace terrain
                 // Set pixel
                 if (y < h && y >= 0 && x < w && x >= 0)
                 {
-                    PlotSqr(x, y, val, width);
+                    TransformSqr(x, y, transform, width);
                 }
             }
         }
@@ -274,6 +304,14 @@ namespace terrain
             double x1, double y1, double x2, double y2,
             double x3, double y3, double x4, double y4,
             double tension, T val, int width)
+        {
+            DrawCurveSegment(x1, y1, x2, y2, x3, y3, x4, y4, tension, t => val, width);
+        }
+
+        void DrawCurveSegment(
+            double x1, double y1, double x2, double y2,
+            double x3, double y3, double x4, double y4,
+            double tension, Func<T, T> transform, int width)
         {
             // Determine distances between controls points (bounding rect) to find the optimal stepsize
             var minX = Math.Min(x1, Math.Min(x2, Math.Min(x3, x4)));
@@ -317,53 +355,61 @@ namespace terrain
                     ty2 = ay * tSq * t + by * tSq + sy1 * t + y2;
 
                     // Draw line
-                    DrawLineBresenham(tx1, ty1, tx2, ty2, val, width);
+                    DrawLineBresenham(tx1, ty1, tx2, ty2, transform, width);
                     tx1 = tx2;
                     ty1 = ty2;
                 }
 
                 // Prevent rounding gap
-                DrawLineBresenham(tx1, ty1, x3, y3, val, width);
+                DrawLineBresenham(tx1, ty1, x3, y3, transform, width);
             }
         }
 
 
         public void DrawCurve(double[] points, double tension, T val, int width)
         {
-            int pn = points.Length;
-
-            // First segment
-            DrawCurveSegment(points[0], points[1], points[0], points[1], points[2], points[3], points[4], points[5], tension, val, width);
-
-            // Middle segments
-            int i;
-            for (i = 2; i < pn - 4; i += 2)
-            {
-                DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[i + 4], points[i + 5], tension, val, width);
-            }
-
-            // Last segment
-            DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[i + 2], points[i + 3], tension, val, width);
+            DrawCurve(points, tension, t => val, width);
         }
         public void DrawClosedCurve(double[] points, double tension, T val, int width)
+        {
+            DrawClosedCurve(points, tension, t => val, width);
+        }
+        public void DrawCurve(double[] points, double tension, Func<T, T> transform, int width)
         {
             int pn = points.Length;
 
             // First segment
-            DrawCurveSegment(points[pn - 2], points[pn - 1], points[0], points[1], points[2], points[3], points[4], points[5], tension, val, width);
+            DrawCurveSegment(points[0], points[1], points[0], points[1], points[2], points[3], points[4], points[5], tension, transform, width);
 
             // Middle segments
             int i;
             for (i = 2; i < pn - 4; i += 2)
             {
-                DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[i + 4], points[i + 5], tension, val, width);
+                DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[i + 4], points[i + 5], tension, transform, width);
             }
 
             // Last segment
-            DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[0], points[1], tension, val, width);
+            DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[i + 2], points[i + 3], tension, transform, width);
+        }
+        public void DrawClosedCurve(double[] points, double tension, Func<T, T> transform, int width)
+        {
+            int pn = points.Length;
+
+            // First segment
+            DrawCurveSegment(points[pn - 2], points[pn - 1], points[0], points[1], points[2], points[3], points[4], points[5], tension, transform, width);
+
+            // Middle segments
+            int i;
+            for (i = 2; i < pn - 4; i += 2)
+            {
+                DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[i + 4], points[i + 5], tension, transform, width);
+            }
+
+            // Last segment
+            DrawCurveSegment(points[i - 2], points[i - 1], points[i], points[i + 1], points[i + 2], points[i + 3], points[0], points[1], tension, transform, width);
 
             // Last-to-First segment
-            DrawCurveSegment(points[i], points[i + 1], points[i + 2], points[i + 3], points[0], points[1], points[2], points[3], tension, val, width);
+            DrawCurveSegment(points[i], points[i + 1], points[i + 2], points[i + 3], points[0], points[1], points[2], points[3], tension, transform, width);
         }
     }
 }

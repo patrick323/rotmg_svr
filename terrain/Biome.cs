@@ -54,6 +54,7 @@ namespace terrain
             };
 
             AddNoiseAndBiome(buff, polyMoist);
+            BlurElevation(buff, 5);
             Randomize(buff);
             ComputeSpawnTerrains(buff);
         }
@@ -127,6 +128,11 @@ namespace terrain
         {
             switch (biome)
             {
+                case "road":
+                    return TileTypes.Road;
+                case "river":
+                    return TileTypes.Water;
+
                 case "beach":
                     return TileTypes.Beach;
 
@@ -156,7 +162,9 @@ namespace terrain
         }
         TerrainType GetBiomeTerrain(TerrainTile tile)
         {
-            if (tile.PolygonId == -1) return TerrainType.None;
+            if (tile.PolygonId == -1 ||
+                tile.TileId == TileTypes.Road ||
+                tile.TileId == TileTypes.Water) return TerrainType.None;
             MapPolygon poly = map.Polygons[tile.PolygonId];
 
             if (!poly.IsWater && beaches.Contains(poly))
@@ -207,6 +215,8 @@ namespace terrain
         string GetBiome(TerrainTile tile)
         {
             if (tile.PolygonId == -1) return "unknown";
+            if (tile.TileId == TileTypes.Road) return "road";
+            if (tile.TileId == TileTypes.Water) return "river";
             MapPolygon poly = map.Polygons[tile.PolygonId];
 
             if (beaches.Contains(poly))
@@ -273,12 +283,12 @@ namespace terrain
                     if (tile.PolygonId != -1)
                     {
                         var poly = map.Polygons[tile.PolygonId];
-                        poly = poly.Neighbour[poly.Id % poly.Neighbour.Length];
 
                         tile.Elevation = Math.Min(1, (float)(poly.DistanceToCoast + poly.DistanceToCoast *
                             elevationNoise.GetNoise(x * 128.0 / w, y * 128.0 / h, 0.3) * 0.01f) * 2);
                         if (tile.Elevation > 1) tile.Elevation = 1;
                         else if (tile.Elevation < 0) tile.Elevation = 0;
+                        tile.Elevation = (float)Math.Pow(tile.Elevation, 1.5);
 
                         tile.Moisture = (float)(moist[poly] + moist[poly] *
                             moistureNoise.GetNoise(x * 128.0 / w, y * 128.0 / h, 0.3) * 0.01f);
@@ -310,11 +320,11 @@ namespace terrain
                              tile.TileId != TileTypes.Beach && tile.TileId != TileTypes.MovingWater &&
                              tile.TileId != TileTypes.DeepWater)
                     {
-                        var id = buff[x + rand.Next(-1, 2), y + rand.Next(-1, 2)].TileId;
+                        var id = tmp[x + rand.Next(-3, 4), y + rand.Next(-3, 4)].TileId;
                         while (id == TileTypes.Water || id == TileTypes.Road ||
                                id == TileTypes.Beach || id == TileTypes.MovingWater ||
                                id == TileTypes.DeepWater)
-                            id = buff[x + rand.Next(-5, 5), y + rand.Next(-5, 5)].TileId;
+                            id = tmp[x + rand.Next(-3, 4), y + rand.Next(-3, 4)].TileId;
                         tile.TileId = id;
                     }
 
@@ -334,6 +344,17 @@ namespace terrain
                             tile.Name = "size:" + size;
                     }
 
+                    float elevation = 0;
+                    int c = 0;
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            if (x + dx < 0 || x + dx >= w || y + dy < 0 || y + dy >= h) continue;
+                            elevation += tmp[x + dx, y + dy].Elevation;
+                            c++;
+                        }
+                    tile.Elevation = elevation / c;
+
                     buff[x, y] = tile;
                 }
         }
@@ -346,8 +367,110 @@ namespace terrain
                 {
                     var tile = buff[x, y];
                     tile.Terrain = GetBiomeTerrain(tile);
+
                     buff[x, y] = tile;
                 }
+        }
+
+
+        //https://code.google.com/p/imagelibrary/source/browse/trunk/Filters/GaussianBlurFilter.cs
+        //Blur the elevation
+
+        static void BlurElevation(TerrainTile[,] tiles, double radius)
+        {
+            int w = tiles.GetLength(0);
+            int h = tiles.GetLength(1);
+
+            int shift, source;
+            int blurDiam = (int)Math.Pow(radius, 2);
+            int gaussWidth = (blurDiam * 2) + 1;
+
+            double[] kernel = CreateKernel(gaussWidth, blurDiam);
+
+            // Calculate the sum of the Gaussian kernel      
+            double gaussSum = 0;
+            for (int n = 0; n < gaussWidth; n++)
+            {
+                gaussSum += kernel[n];
+            }
+
+            // Scale the Gaussian kernel
+            for (int n = 0; n < gaussWidth; n++)
+            {
+                kernel[n] = kernel[n] / gaussSum;
+            }
+            //premul = kernel[k] / gaussSum;
+
+
+            // Create an X & Y pass buffer  
+            float[,] gaussPassX = new float[w, h];
+
+            // Do Horizontal Pass  
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    // Iterate through kernel  
+                    for (int k = 0; k < gaussWidth; k++)
+                    {
+                        // Get pixel-shift (pixel dist between dest and source)  
+                        shift = k - blurDiam;
+
+                        // Basic edge clamp  
+                        source = x + shift;
+                        if (source <= 0 || source >= w) { source = x; }
+
+                        // Combine source and destination pixels with Gaussian Weight  
+                        gaussPassX[x, y] = (float)(gaussPassX[x, y] + tiles[source, y].Elevation * kernel[k]);
+                    }
+                }
+            }
+
+            // Do Vertical Pass  
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    tiles[x, y].Elevation = 0;
+                    // Iterate through kernel  
+                    for (int k = 0; k < gaussWidth; k++)
+                    {
+                        // Get pixel-shift (pixel dist between dest and source)   
+                        shift = k - blurDiam;
+
+                        // Basic edge clamp  
+                        source = y + shift;
+                        if (source <= 0 || source >= h) { source = y; }
+
+                        // Combine source and destination pixels with Gaussian Weight  
+                        tiles[x, y].Elevation = (float)(tiles[x, y].Elevation + (gaussPassX[x, source]) * kernel[k]);
+                    }
+                }
+            }
+        }
+
+        private static double[] CreateKernel(int gaussianWidth, int blurDiam)
+        {
+
+            double[] kernel = new double[gaussianWidth];
+
+            // Set the maximum value of the Gaussian curve  
+            const double sd = 255;
+
+            // Set the width of the Gaussian curve  
+            double range = gaussianWidth;
+
+            // Set the average value of the Gaussian curve   
+            double mean = (range / sd);
+
+            // Set first half of Gaussian curve in kernel  
+            for (int pos = 0, len = blurDiam + 1; pos < len; pos++)
+            {
+                // Distribute Gaussian curve across kernel[array]   
+                kernel[gaussianWidth - 1 - pos] = kernel[pos] = Math.Sqrt(Math.Sin((((pos + 1) * (Math.PI / 2)) - mean) / range)) * sd;
+            }
+
+            return kernel;
         }
     }
 }

@@ -8,8 +8,6 @@ using wServer.realm.setpieces;
 
 namespace wServer.realm.entities.player.commands
 {
-
-
     class SpawnCommand : ICommand
     {
         public string Command { get { return "spawn"; } }
@@ -215,7 +213,6 @@ namespace wServer.realm.entities.player.commands
         }
     }
 
-
     class DebugCommand : ICommand
     {
         public string Command { get { return "debug"; } }
@@ -273,6 +270,7 @@ namespace wServer.realm.entities.player.commands
             });
         }
     }
+
     class KillAll : ICommand
     {
         public string Command { get { return "killall"; } }
@@ -281,17 +279,17 @@ namespace wServer.realm.entities.player.commands
         public void Execute(Player player, string[] args)
         {
             try
-            {                
-                 foreach (var i in player.Owner.Enemies)
-                    {                        
-                        if ((i.Value.ObjectDesc != null )&&                              
-                            (i.Value.ObjectDesc.ObjectId != null ) &&
-                            (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
-                        {                        
-                          // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
-                           i.Value.Owner.LeaveWorld(i.Value);
-                        }
-                 }
+            {
+                foreach (var i in player.Owner.Enemies)
+                {
+                    if ((i.Value.ObjectDesc != null) &&
+                        (i.Value.ObjectDesc.ObjectId != null) &&
+                        (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
+                    {
+                        // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
+                        i.Value.Owner.LeaveWorld(i.Value);
+                    }
+                }
             }
             catch
             {
@@ -301,7 +299,7 @@ namespace wServer.realm.entities.player.commands
                     Stars = -1,
                     Name = "",
                     Text = "Cannot killall!"
-                });                
+                });
             }
         }
     }
@@ -339,7 +337,6 @@ namespace wServer.realm.entities.player.commands
         }
     }
 
-
     class Kick : ICommand
     {
         public string Command { get { return "kick"; } }
@@ -349,22 +346,22 @@ namespace wServer.realm.entities.player.commands
         {
             try
             {
-                World world = RealmManager.GetWorld(World.VAULT_ID); 
+                World world = RealmManager.GetWorld(World.VAULT_ID);
                 foreach (var i in player.Owner.Players)
                 {
-                      
+
                     if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
-                    {                                          
-                      i.Value.Client.SendPacket(new ReconnectPacket()
-            {
-                Host = "",
-                Port = 2050,
-                GameId = world.Id,
-                Name = world.Name,
-                Key = Empty<byte>.Array,
-            });               
-                    
-                    }                                                              
+                    {
+                        i.Value.Client.SendPacket(new ReconnectPacket()
+              {
+                  Host = "",
+                  Port = 2050,
+                  GameId = world.Id,
+                  Name = world.Name,
+                  Key = Empty<byte>.Array,
+              });
+
+                    }
                 }
             }
             catch
@@ -384,7 +381,7 @@ namespace wServer.realm.entities.player.commands
     {
         public string Command { get { return "getquest"; } }
         public bool RequirePerm { get { return true; } }
-        
+
         public void Execute(Player player, string[] args)
         {
             try
@@ -410,10 +407,10 @@ namespace wServer.realm.entities.player.commands
         }
     }
 
-     class OryxSay : ICommand
+    class OryxSay : ICommand
     {
         public string Command { get { return "oryxsay"; } }
-        public bool RequirePerm { get { return true; } }     
+        public bool RequirePerm { get { return true; } }
 
         public void Execute(Player player, string[] args)
         {
@@ -445,52 +442,68 @@ namespace wServer.realm.entities.player.commands
         }
     }
 
-     class ListCommands : ICommand
-     {
-         public string Command { get { return "commands"; } }
-         public bool RequirePerm { get { return true; } }
+    class ListCommands : ICommand
+    {
+        public string Command { get { return "commands"; } }
+        public bool RequirePerm { get { return true; } }
 
-         public void Execute(Player player, string[] args)
-         {
-             try
-             {
-                     Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
-                             var t = typeof(ICommand);
-                             foreach (var i in t.Assembly.GetTypes())
-                                 if (t.IsAssignableFrom(i) && i != t)
-                                 {
-                                     var instance = (ICommand)Activator.CreateInstance(i);
-                                     cmds.Add(instance.Command, instance);
-                                 }                         
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {
+                Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
+                var t = typeof(ICommand);
+                foreach (var i in t.Assembly.GetTypes())
+                    if (t.IsAssignableFrom(i) && i != t)
+                    {
+                        var instance = (ICommand)Activator.CreateInstance(i);
+                        cmds.Add(instance.Command, instance);
+                    }
 
-                 StringBuilder sb = new StringBuilder("Commands: ");
-                 var copy = cmds.Values.ToArray();
-                 for (int i = 0; i < copy.Length; i++)
-                 {
-                     if (i != 0) sb.Append(", ");
-                     sb.Append(copy[i].Command);
-                 }
+                StringBuilder sb = new StringBuilder("Commands: ");
+                var copy = cmds.Values.ToArray();
+                for (int i = 0; i < copy.Length; i++)
+                {
+                    if (i != 0) sb.Append(", ");
+                    sb.Append(copy[i].Command);
+                }
 
-                 player.Client.SendPacket(new TextPacket()
-                 {
-                     BubbleTime = 0,
-                     Stars = -1,
-                     Name = "",
-                     Text = sb.ToString()
-                 });
-             }
-             catch
-             {
-                 player.Client.SendPacket(new TextPacket()
-                 {
-                     BubbleTime = 0,
-                     Stars = -1,
-                     Name = "",
-                     Text = "Cannot say that!"
-                 });
-             }
-         }
-     }
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = sb.ToString()
+                });
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot say that!"
+                });
+            }
+        }
+    }
 
+    class AltitudeCommands : ICommand
+    {
+        public string Command { get { return "alt"; } }
+        public bool RequirePerm { get { return true; } }
 
+        public void Execute(Player player, string[] args)
+        {
+            var tile = player.Owner.Map[(int)player.X, (int)player.Y];
+            player.Client.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "",
+                Text = tile.Elevation.ToString()
+            });
+        }
+    }
 }

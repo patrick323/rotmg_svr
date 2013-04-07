@@ -136,7 +136,7 @@ namespace terrain
                 for (int x = 0; x < h; x++)
                 {
                     uint color = 0x00ffffff;
-                    color |= (uint)(tiles[x, y].Elevation * 256) << 24;
+                    color |= (uint)((byte)(tiles[x, y].Elevation * 255) << 24);
                     buff[x, y] = color;
                 }
             buff.Unlock();
@@ -174,9 +174,8 @@ namespace terrain
 
                 var dat = CreateTerrain(rand.Next(), map);
                 new Biome(rand.Next(), map).ComputeBiomes(dat);
+
                 new TerrainDisplay(dat).ShowDialog();
-                //Test.Show(RenderColorBmp(dat));
-                //Test.Show(RenderTerrainBmp(dat));
                 //Test.Show(RenderMoistBmp(dat));
                 //Test.Show(RenderEvalBmp(dat));
 
@@ -227,13 +226,10 @@ namespace terrain
             {
                 rasterizer.DrawClosedCurve(i.SelectMany(_ => new[] { 
                     (_.X + 1) / 2 * Size, (_.Y + 1) / 2 * Size }).ToArray(),
-                    1, new TerrainTile()
+                    1, t =>
                     {
-                        PolygonId = -1,
-                        Elevation = -1,
-                        Moisture = -1,
-                        TileId = TileTypes.Road,
-                        TileObj = null
+                        t.TileId = TileTypes.Road;
+                        return t;
                     }, 3);
             }
             //Render waters poly
@@ -288,13 +284,12 @@ namespace terrain
                 rasterizer.DrawLineBresenham(
                     (i.Key.Item1.X + 1) / 2 * Size, (i.Key.Item1.Y + 1) / 2 * Size,
                     (i.Key.Item2.X + 1) / 2 * Size, (i.Key.Item2.Y + 1) / 2 * Size,
-                    new TerrainTile()
+                    t =>
                     {
-                        PolygonId = -1,
-                        Elevation = (float)(i.Key.Item1.DistanceToCoast + i.Key.Item2.DistanceToCoast) / 2,
-                        Moisture = 1,
-                        TileId = TileTypes.Water,
-                        TileObj = null
+                        t.TileId = TileTypes.Water;
+                        t.Elevation = (float)(i.Key.Item1.DistanceToCoast + i.Key.Item2.DistanceToCoast) / 2;
+                        t.Moisture = 1;
+                        return t;
                     }, 3 * Math.Min(2, i.Value));
             }
 
