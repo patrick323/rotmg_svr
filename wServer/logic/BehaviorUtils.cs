@@ -183,8 +183,7 @@ namespace wServer.logic
             if (x < 0 || x >= entity.Owner.Map.Width ||
                 y < 0 || y >= entity.Owner.Map.Height)
                 return false;
-            if (entity.ObjectDesc.Flying &&
-                entity.Owner.Obstacles[(int)x, (int)y] != 2) return true;
+            if (entity.Owner.Obstacles[(int)x, (int)y] != 2) return true;
 
             var objId = entity.Owner.Map[(int)x, (int)y].ObjType;
             if (objId != 0 &&

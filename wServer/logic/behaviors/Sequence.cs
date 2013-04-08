@@ -17,6 +17,12 @@ namespace wServer.logic.behaviors
             this.children = children;
         }
 
+        protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
+        {
+            foreach (var i in children)
+                i.OnStateEntry(host, time);
+        }
+
         protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             int index;

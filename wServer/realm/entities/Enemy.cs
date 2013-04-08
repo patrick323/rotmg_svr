@@ -17,7 +17,6 @@ namespace wServer.realm.entities
         {
             stat = ObjectDesc.MaxHP == 0;
             counter = new DamageCounter(this);
-            BehaviorDb.ResolveLoot(this);
         }
 
         public DamageCounter DamageCounter { get { return counter; } }
@@ -81,11 +80,12 @@ namespace wServer.realm.entities
 
                 counter.HitBy(from, time, null, dmg);
 
-                if (HP < 0)
+                if (HP < 0 && Owner != null)
                 {
                     counter.Death(time);
-                    if (Owner != null)
-                        Owner.LeaveWorld(this);
+                    if (CurrentState != null)
+                        CurrentState.OnDeath(new BehaviorEventArgs(this, time));
+                    Owner.LeaveWorld(this);
                 }
 
                 UpdateCount++;
@@ -121,11 +121,12 @@ namespace wServer.realm.entities
 
                 counter.HitBy(projectile.ProjectileOwner as Player, time, projectile, dmg);
 
-                if (HP < 0)
+                if (HP < 0 && Owner != null)
                 {
                     counter.Death(time);
-                    if (Owner != null)
-                        Owner.LeaveWorld(this);
+                    if (CurrentState != null)
+                        CurrentState.OnDeath(new BehaviorEventArgs(this, time));
+                    Owner.LeaveWorld(this);
                 }
                 UpdateCount++;
                 return true;

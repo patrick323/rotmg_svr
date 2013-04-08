@@ -12,12 +12,12 @@ namespace wServer.logic.behaviors
         //State storage: none
 
         uint color;
-        int flashPeriod;
+        float flashPeriod;
         int flashRepeats;
-        public Flash(uint color, int flashPeriod, int flashRepeats)
+        public Flash(uint color, double flashPeriod, int flashRepeats)
         {
             this.color = color;
-            this.flashPeriod = flashPeriod;
+            this.flashPeriod = (float)flashPeriod;
             this.flashRepeats = flashRepeats;
         }
 

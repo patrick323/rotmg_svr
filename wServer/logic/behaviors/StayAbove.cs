@@ -10,7 +10,7 @@ namespace wServer.logic.behaviors
 {
     class StayAbove : CycleBehavior
     {
-        //State storage: cooldown timer
+        //State storage: none
 
         float speed;
         int altitude;
@@ -22,10 +22,6 @@ namespace wServer.logic.behaviors
 
         protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
-            int cooldown;
-            if (state == null) cooldown = 1000;
-            else cooldown = (int)state;
-
             Status = CycleStatus.NotStarted;
 
             if (host.HasConditionEffect(ConditionEffects.Paralyzed)) return;
@@ -41,19 +37,10 @@ namespace wServer.logic.behaviors
                 host.ValidateAndMove(host.X + vect.X * dist, host.Y + vect.Y * dist);
                 host.UpdateCount++;
 
-                if (cooldown <= 0)
-                {
-                    Status = CycleStatus.Completed;
-                    cooldown = 1000;
-                }
-                else
-                {
-                    Status = CycleStatus.InProgress;
-                    cooldown -= time.thisTickTimes;
-                }
+                Status = CycleStatus.InProgress;
             }
-
-            state = cooldown;
+            else
+                Status = CycleStatus.Completed;
         }
     }
 }

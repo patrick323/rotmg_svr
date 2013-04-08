@@ -14,12 +14,14 @@ namespace wServer.logic.behaviors
         //State storage: none
 
         int index;
-        private SetAltTexture(int index)
+        public SetAltTexture(int index)
         {
             this.index = index;
         }
 
         protected override void TickCore(Entity host, RealmTime time, ref object state)
+        { }
+        protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {
             if ((host as Enemy).AltTextureIndex != index)
             {

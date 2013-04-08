@@ -6,7 +6,7 @@ using wServer.realm;
 
 namespace wServer.logic
 {
-    public abstract class Behavior
+    public abstract class Behavior : IStateChildren
     {
         public void Tick(Entity host, RealmTime time)
         {
@@ -38,6 +38,7 @@ namespace wServer.logic
         }
         protected virtual void OnStateEntry(Entity host, RealmTime time, ref object state)
         { }
+        protected internal virtual void Resolve(State parent) { }
 
         [ThreadStatic]
         private static Random rand;

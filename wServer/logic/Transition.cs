@@ -6,7 +6,7 @@ using wServer.realm;
 
 namespace wServer.logic
 {
-    public abstract class Transition
+    public abstract class Transition : IStateChildren
     {
         string targetStateName;
         public Transition(string targetState)

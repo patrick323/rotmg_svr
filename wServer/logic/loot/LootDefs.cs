@@ -119,29 +119,29 @@ namespace wServer.logic.loot
 
         public void Populate(Loot loot, IList<LootDef> defs)
         {
+            Item[] candidates;
             switch (type)
             {
                 case ItemType.Weapon:
-                    foreach (var i in WeaponItems[tier])
-                        defs.Add(new LootDef(i, probability));
+                    candidates = WeaponItems[tier];
                     break;
                 case ItemType.Ability:
-                    foreach (var i in AbilityItems[tier])
-                        defs.Add(new LootDef(i, probability));
+                    candidates = AbilityItems[tier];
                     break;
                 case ItemType.Armor:
-                    foreach (var i in ArmorItems[tier])
-                        defs.Add(new LootDef(i, probability));
+                    candidates = ArmorItems[tier];
                     break;
                 case ItemType.Ring:
-                    foreach (var i in RingItems[tier])
-                        defs.Add(new LootDef(i, probability));
+                    candidates = RingItems[tier];
                     break;
                 case ItemType.Potion:
-                    foreach (var i in RingItems[tier])
-                        defs.Add(new LootDef(i, probability));
+                    candidates = RingItems[tier];
                     break;
+                default:
+                    throw new NotSupportedException(type.ToString());
             }
+            foreach (var i in candidates)
+                defs.Add(new LootDef(i, probability / candidates.Length));
         }
     }
 

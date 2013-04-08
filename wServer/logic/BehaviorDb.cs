@@ -17,18 +17,6 @@ namespace wServer.logic
                 entity.SwitchTo(def.Item1);
         }
 
-        public static void ResolveLoot(Enemy enemy)
-        {
-            Tuple<State, Loot> def;
-            if (Definitions.TryGetValue(enemy.ObjectType, out def) && def.Item2 != null)
-            {
-                enemy.DamageCounter.Dead += (sender, e) =>
-                {
-                    def.Item2.Handle(enemy, e.Time);
-                };
-            }
-        }
-
         struct _
         {
             public _ Init(string objType, State rootState, params ILootDef[] defs)
@@ -39,6 +27,7 @@ namespace wServer.logic
                     var loot = new Loot();
                     foreach (var i in defs)
                         i.Populate(loot, loot);
+                    rootState.Death += (sender, e) => loot.Handle((Enemy)e.Host, e.Time);
                     Definitions.Add(XmlDatas.IdToType[objType], new Tuple<State, Loot>(rootState, loot));
                 }
                 else

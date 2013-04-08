@@ -3,494 +3,530 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ Lowland = Behav()
-            .Init(0x617, Behaves("Hobbit Mage",
-                    IfNot.Instance(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x616, 2, 2, 4),
-                                SpawnMinionImmediate.Instance(0x615, 2, 2, 3)
-                            )
+            .Init("Hobbit Mage",
+                    new State(
+                        new State("idle",
+                            new PlayerWithinTransition(12, "ring1")
                         ),
-                        IfNot.Instance(
-                            Chasing.Instance(7.5f, 6, 4, null),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    new QueuedBehavior(
-                        RingAttack.Instance(15, offset: 0, projectileIndex: 0),
-                        Cooldown.Instance(400),
-                        RingAttack.Instance(15, offset: 8 * (float)Math.PI / 180, projectileIndex: 1),
-                        Cooldown.Instance(400),
-                        RingAttack.Instance(15, offset: 16 * (float)Math.PI / 180, projectileIndex: 2),
-                        Cooldown.Instance(400)
-                    ),
-                    Rand.Instance(
-                        Reproduce.Instance(0x616, 4, 12000),
-                        Reproduce.Instance(0x615, 3, 6000)
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.2, (ILoot)new TierLoot(2, ItemType.Weapon)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(2, ItemType.Armor)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x616, Behaves("Hobbit Archer",
-                    IfNot.Instance(
-                        Chasing.Instance(11, 8, 6, 0x617),
-                        IfNot.Instance(
-                            Chasing.Instance(8, 8, 4, null),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x615, Behaves("Hobbit Rogue",
-                    IfNot.Instance(
-                        Chasing.Instance(12, 9, 6, 0x617),
-                        IfNot.Instance(
-                            Chasing.Instance(8.5f, 8, 1, null),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(3)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x61a, Behaves("Undead Hobbit Mage",
-                    IfNot.Instance(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x619, 2, 2, 4),
-                                SpawnMinionImmediate.Instance(0x618, 2, 2, 3)
-                            )
+                        new State("ring1",
+                            new Shoot(1, fixedAngle: 0, count: 15, shootAngle: 24, coolDown: 1200, projectileIndex: 0),
+                            new TimedTransition(400, "ring2")
                         ),
-                        IfNot.Instance(
-                            Chasing.Instance(7.5f, 6, 4, null),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    IfNot.Instance(
-                        Cooldown.Instance(1000, SimpleAttack.Instance(10, 3)),
-                        new QueuedBehavior(
-                            RingAttack.Instance(15, offset: 0, projectileIndex: 0),
-                            Cooldown.Instance(400),
-                            RingAttack.Instance(15, offset: 8 * (float)Math.PI / 180, projectileIndex: 1),
-                            Cooldown.Instance(400),
-                            RingAttack.Instance(15, offset: 16 * (float)Math.PI / 180, projectileIndex: 2),
-                            Cooldown.Instance(400)
-                        )
-                    ),
-                    Rand.Instance(
-                        Reproduce.Instance(0x616, 4, 12000),
-                        Reproduce.Instance(0x615, 3, 6000)
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.20, (ILoot)new TierLoot(2, ItemType.Weapon)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(3, ItemType.Weapon)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(2, ItemType.Armor)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(3, ItemType.Armor)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.03, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x619, Behaves("Undead Hobbit Archer",
-                    IfNot.Instance(
-                        Chasing.Instance(11, 8, 6, 0x61a),
-                        IfNot.Instance(
-                            Chasing.Instance(8, 8, 4, null),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x618, Behaves("Undead Hobbit Rogue",
-                    IfNot.Instance(
-                        Chasing.Instance(12, 9, 6, 0x61a),
-                        IfNot.Instance(
-                            Chasing.Instance(8.5f, 8, 1, null),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(3)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x7f00, Behaves("Sumo Master",
-                    IfGreater.Instance(42, 250,
-                        Chasing.Instance(4, 6, 1, null),
-                        IfEqual.Instance(42, -1,
-                            Chasing.Instance(6, 6, 1, null)
-                        )
-                    ),
-                    IfEqual.Instance(42, -1,
-                        new QueuedBehavior(
-                            Cooldown.Instance(150, SimpleAttack.Instance(5, 1)),
-                            Cooldown.Instance(150, SimpleAttack.Instance(5, 1)),
-                            Cooldown.Instance(150, SimpleAttack.Instance(5, 1)),
-                            Cooldown.Instance(150, SimpleAttack.Instance(5, 1)),
-                            Cooldown.Instance(400)
+                        new State("ring2",
+                            new Shoot(1, fixedAngle: 8, count: 15, shootAngle: 24, coolDown: 1200, projectileIndex: 1),
+                            new TimedTransition(400, "ring3")
                         ),
-                        Cooldown.Instance(1000, SimpleAttack.Instance(10, 0))
+                        new State("ring3",
+                            new Shoot(1, fixedAngle: 16, count: 15, shootAngle: 24, coolDown: 1200, projectileIndex: 2),
+                            new TimedTransition(400, "idle")
+                        ),
+                        new Prioritize(
+                            new StayAbove(0.4, 9),
+                            new Follow(0.75, range: 6),
+                            new Wander(0.4)
+                        ),
+                        new Spawn("Hobbit Archer", maxChildren: 4, coolDown: 12000),
+                        new Spawn("Hobbit Rogue", maxChildren: 3, coolDown: 6000)
                     ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new SumoMaster()
-                    },
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.10, (ILoot)new TierLoot(2, ItemType.Weapon)),
-                            Tuple.Create(0.05, (ILoot)new TierLoot(3, ItemType.Armor)),
-                            Tuple.Create(0.03, (ILoot)new TierLoot(4, ItemType.Armor)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.03, (ILoot)MpPotionLoot.Instance)
+                    new TierLoot(2, ItemType.Weapon, 0.3),
+                    new TierLoot(2, ItemType.Armor, 0.3),
+                    new TierLoot(1, ItemType.Ring, 0.11),
+                    new TierLoot(1, ItemType.Ability, 0.39),
+                    new ItemLoot("Health Potion", 0.02),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+            .Init("Hobbit Archer",
+                    new State(
+                        new Shoot(10),
+                        new State("run1",
+                            new Prioritize(
+                                new Protect(1.1, "Hobbit Mage", acquireRange: 12, protectionRange: 10, reprotectRange: 1),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(400, "run2")
+                        ),
+                        new State("run2",
+                            new Prioritize(
+                                new StayBack(0.8, 4),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(600, "run3")
+                        ),
+                        new State("run3",
+                            new Prioritize(
+                                new Protect(1, "Hobbit Archer", acquireRange: 16, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(400, "run1")
                         )
-                    )
-                ))
-            .Init(0x7f01, Behaves("Lil Sumo",
-                    IfNot.Instance(
-                        Circling.Instance(3, 10, 4, 0x7f00),
-                        SimpleWandering.Instance(4)
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
+                    new ItemLoot("Health Potion", 0.04)
+                )
+            .Init("Hobbit Rogue",
+                    new State(
+                        new Shoot(3),
+                        new Prioritize(
+                            new Protect(1.2, "Hobbit Mage", acquireRange: 15, protectionRange: 9, reprotectRange: 2.5),
+                            new Follow(0.85, range: 1),
+                            new Wander(0.4)
                         )
-                    )
-                ))
+                    ),
+                    new ItemLoot("Health Potion", 0.04)
+                )
 
-            .Init(0x609, Behaves("Elf Wizard",
-                    IfNot.Instance(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x605, 2, 0, 2),
-                                SpawnMinionImmediate.Instance(0x606, 2, 1, 4),
-                                SpawnMinionImmediate.Instance(0x607, 2, 1, 1)
-                            )
+            .Init("Undead Hobbit Mage",
+                    new State(
+                        new Shoot(10, projectileIndex: 3),
+                        new State("idle",
+                            new PlayerWithinTransition(12, "ring1")
                         ),
-                        new QueuedBehavior(
-                            Not.Instance(Chasing.Instance(6, 8, 2, null)),
-                            Not.Instance(Retracting.Instance(6, 5, null))
-                        )
-                    ),
-                    new QueuedBehavior(
-                        Cooldown.Instance(1000, MultiAttack.Instance(10, 14 * (float)Math.PI / 180, 3)),
-                        Cooldown.Instance(1000, MultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3))
-                    ),
-                    Rand.Instance(
-                        Reproduce.Instance(0x605, 2, 15000),
-                        Reproduce.Instance(0x606, 4, 7000),
-                        Reproduce.Instance(0x607, 1, 8000)
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.20, (ILoot)new TierLoot(2, ItemType.Weapon)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(2, ItemType.Armor)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x605, Behaves("Elf Archer",
-                    IfNot.Instance(
-                        Circling.Instance(6, 10, 5, 0x609),
-                        SimpleWandering.Instance(4)
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x606, Behaves("Elf Swordsman",
-                    IfNot.Instance(
-                        Chasing.Instance(4, 3, 1, null),
-                        IfNot.Instance(
-                            Chasing.Instance(6, 10, 6, 0x609),
-                            SimpleWandering.Instance(4)
-                        )
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x607, Behaves("Elf Mage",
-                    IfNot.Instance(
-                        Chasing.Instance(6, 10, 6, 0x609),
-                        SimpleWandering.Instance(4)
-                    ),
-                    Cooldown.Instance(300, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x614, Behaves("Goblin Mage",
-                    IfNot.Instance(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x612, 2, 3, 7),
-                                SpawnMinionImmediate.Instance(0x613, 2, 3, 7)
-                            )
+                        new State("ring1",
+                            new Shoot(1, fixedAngle: 0, count: 15, shootAngle: 24, coolDown: 1200, projectileIndex: 0),
+                            new TimedTransition(400, "ring2")
                         ),
-                        IfNot.Instance(
-                            Escaping.Instance(5, 6, 182, null),
-                            IfNot.Instance(
-                                Chasing.Instance(5, 8, 6, null),
-                                SimpleWandering.Instance(4)
-                            )
+                        new State("ring2",
+                            new Shoot(1, fixedAngle: 8, count: 15, shootAngle: 24, coolDown: 1200, projectileIndex: 1),
+                            new TimedTransition(400, "ring3")
+                        ),
+                        new State("ring3",
+                            new Shoot(1, fixedAngle: 16, count: 15, shootAngle: 24, coolDown: 1200, projectileIndex: 2),
+                            new TimedTransition(400, "idle")
+                        ),
+                        new Prioritize(
+                            new StayAbove(0.4, 20),
+                            new Follow(0.75, range: 6),
+                            new Wander(0.4)
+                        ),
+                        new Spawn("Undead Hobbit Archer", maxChildren: 4, coolDown: 12000),
+                        new Spawn("Undead Hobbit Rogue", maxChildren: 3, coolDown: 6000)
+                    ),
+                    new TierLoot(3, ItemType.Weapon, 0.3),
+                    new TierLoot(3, ItemType.Armor, 0.3),
+                    new TierLoot(1, ItemType.Ring, 0.12),
+                    new TierLoot(1, ItemType.Ability, 0.39),
+                    new ItemLoot("Magic Potion", 0.03)
+                )
+            .Init("Undead Hobbit Archer",
+                    new State(
+                        new Shoot(10),
+                        new State("run1",
+                            new Prioritize(
+                                new Protect(1.1, "Undead Hobbit Mage", acquireRange: 12, protectionRange: 10, reprotectRange: 1),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(400, "run2")
+                        ),
+                        new State("run2",
+                            new Prioritize(
+                                new StayBack(0.8, 4),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(600, "run3")
+                        ),
+                        new State("run3",
+                            new Prioritize(
+                                new Protect(1, "Undead Hobbit Archer", acquireRange: 16, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(400, "run1")
                         )
                     ),
-                    new QueuedBehavior(
-                        Cooldown.Instance(1000, SimpleAttack.Instance(10, 0)),
-                        Cooldown.Instance(1000, SimpleAttack.Instance(10, 1))
-                    ),
-                    Rand.Instance(
-                        Reproduce.Instance(0x612, 7, 12000),
-                        Reproduce.Instance(0x613, 7, 12000)
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.20, (ILoot)new TierLoot(3, ItemType.Weapon)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(3, ItemType.Armor)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
+                    new ItemLoot("Magic Potion", 0.03)
+                )
+            .Init("Undead Hobbit Rogue",
+                    new State(
+                        new Shoot(3),
+                        new Prioritize(
+                            new Protect(1.2, "Undead Hobbit Mage", acquireRange: 15, protectionRange: 9, reprotectRange: 2.5),
+                            new Follow(0.85, range: 1),
+                            new Wander(0.4)
                         )
-                    )
-                ))
-            .Init(0x612, Behaves("Goblin Rogue",
-                    new QueuedBehavior(
-                        Timed.Instance(2500, Not.Instance(Chasing.Instance(8, 8, 2, null))),
-                        Timed.Instance(500, False.Instance(Circling.Instance(2, 10, 8, 0x614)))
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(3)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x613, Behaves("Goblin Warrior",
-                    new QueuedBehavior(
-                        Timed.Instance(2500, Not.Instance(Chasing.Instance(8, 8, 2, null))),
-                        Timed.Instance(500, False.Instance(Circling.Instance(2, 10, 8, 0x614)))
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(3)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
-                        )
-                    )
-                ))
+                    new ItemLoot("Health Potion", 0.04)
+                )
 
-            .Init(0x6c8, Behaves("Easily Enraged Bunny",
-                    Chasing.Instance(6, 10, 0, null),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new DeathTransmute(0x6c9)
-                    }
-                ))
-            .Init(0x6c9, Behaves("Enraged Bunny",
-                    new RunBehaviors(
-                        Chasing.Instance(8, 10, 0, null),
-                        new QueuedBehavior(
-                            Flashing.Instance(1000, 0xffffff00),
-                            Flashing.Instance(1000, 0xffff0000)
-                        )
-                    ),
-                    Cooldown.Instance(500, SimpleAttack.Instance(8)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x6d1, Behaves("Forest Nymph",
-                    new QueuedBehavior(
-                        Timed.Instance(2000, False.Instance(Circling.Instance(3, 10, 8, null))),
-                        Timed.Instance(2000, False.Instance(SimpleWandering.Instance(6)))
-                    ),
-                    Cooldown.Instance(1500,
-                        Rand.Instance(
-                            SimpleAttack.Instance(10, projectileIndex: 0),
-                            RingAttack.Instance(6, 10, projectileIndex: 1)
-                        )
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
+            .Init("Sumo Master",
+                    new State(
+                        new State("sleeping1",
+                            new SetAltTexture(0),
+                            new TimedTransition(1000, "sleeping2"),
+                            new HpLessTransition(0.99, "hurt")
+                        ),
+                        new State("sleeping2",
+                            new SetAltTexture(3),
+                            new TimedTransition(1000, "sleeping1"),
+                            new HpLessTransition(0.99, "hurt")
+                        ),
+                        new State("hurt",
+                            new SetAltTexture(2),
+                            new Spawn("Lil Sumo", coolDown: 200),
+                            new TimedTransition(1000, "awake")
+                        ),
+                        new State("awake",
+                            new SetAltTexture(1),
+                            new Shoot(3, coolDown: 250),
+                            new Prioritize(
+                                new Follow(0.05, range: 1),
+                                new Wander(0.05)
+                            ),
+                            new HpLessTransition(0.5, "rage")
+                        ),
+                        new State("rage",
+                            new SetAltTexture(4),
+                            new Taunt("Engaging Super-Mode!!!"),
 
-            .Init(0x60d, Behaves("Sandsman King",
-                    IfNot.Instance(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x60a, 2, 2, 4),
-                                SpawnMinionImmediate.Instance(0x60c, 2, 2, 5)
+                            new Prioritize(
+                                new Follow(0.6, range: 1),
+                                new Wander(0.6)
+                            ),
+
+                            new State("shoot",
+                                new Shoot(8, projectileIndex: 1, coolDown: new Cooldown(150, 0)),
+                                new TimedTransition(700, "rest")
+                            ),
+                            new State("rest",
+                                new TimedTransition(400, "shoot")
+                            )
+                        )
+                    ),
+                    new ItemLoot("Health Potion", 0.05),
+                    new ItemLoot("Magic Potion", 0.05)
+                )
+            .Init("Lil Sumo",
+                    new State(
+                        new Shoot(8),
+                        new Prioritize(
+                            new Orbit(0.4, 2, target: "Sumo Master"),
+                            new Wander(0.4)
+                        )
+                    ),
+                    new ItemLoot("Health Potion", 0.02),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+
+            .Init("Elf Wizard",
+                    new State(
+                        new State("idle",
+                            new PlayerWithinTransition(11, "move1")
+                        ),
+                        new State("move1",
+                            new Shoot(10, count: 3, shootAngle: 14, predictive: 0.3),
+                            new Prioritize(
+                                new StayAbove(0.4, 14),
+                                new BackAndForth(0.8)
+                            ),
+                            new TimedTransition(2000, "move2")
+                        ),
+                        new State("move2",
+                            new Shoot(10, count: 3, shootAngle: 10, predictive: 0.5),
+                            new Prioritize(
+                                new StayAbove(0.4, 14),
+                                new Follow(0.6, acquireRange: 10.5, range: 3),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(2000, "move3")
+                        ),
+                        new State("move3",
+                            new Prioritize(
+                                new StayAbove(0.4, 14),
+                                new StayBack(0.6, distance: 5),
+                                new Wander(0.4)
+                            ),
+                            new TimedTransition(2000, "idle")
+                        ),
+                        new Spawn("Elf Archer", maxChildren: 2, coolDown: 15000),
+                        new Spawn("Elf Swordsman", maxChildren: 4, coolDown: 7000),
+                        new Spawn("Elf Mage", maxChildren: 1, coolDown: 8000)
+                    ),
+                    new TierLoot(2, ItemType.Weapon, 0.36),
+                    new TierLoot(2, ItemType.Armor, 0.36),
+                    new TierLoot(1, ItemType.Ring, 0.11),
+                    new TierLoot(1, ItemType.Ability, 0.39),
+                    new ItemLoot("Health Potion", 0.02),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+            .Init("Elf Archer",
+                    new State(
+                        new Shoot(10, predictive: 1),
+                        new Prioritize(
+                            new Orbit(0.5, 6),
+                            new Protect(1.2, "Elf Wizard", acquireRange: 30, protectionRange: 10, reprotectRange: 1),
+                            new Wander(0.4)
+                        )
+                    ),
+                    new ItemLoot("Health Potion", 0.04)
+                )
+            .Init("Elf Swordsman",
+                    new State(
+                        new Shoot(10, predictive: 1),
+                        new Prioritize(
+                            new Protect(1.2, "Elf Wizard", acquireRange: 15, protectionRange: 10, reprotectRange: 5),
+                            new Buzz(4, dist: 1, coolDown: 2000),
+                            new Orbit(0.6, 6),
+                            new Wander(0.4)
+                        )
+                    ),
+                    new ItemLoot("Health Potion", 0.04)
+                )
+            .Init("Elf Mage",
+                    new State(
+                        new Shoot(8, coolDown: 300),
+                        new Prioritize(
+                            new Orbit(0.5, 6),
+                            new Protect(1.2, "Elf Wizard", acquireRange: 30, protectionRange: 10, reprotectRange: 1),
+                            new Wander(0.4)
+                        )
+                    ),
+                    new ItemLoot("Magic Potion", 0.03)
+                )
+
+            .Init("Goblin Rogue",
+                    new State(
+                        new State("protect",
+                            new Protect(0.8, "Goblin Mage", acquireRange: 12, protectionRange: 1.5, reprotectRange: 1.5),
+                            new TimedTransition(1200, "scatter")
+                        ),
+                        new State("scatter",
+                            new Orbit(0.8, 7, target: "Goblin Mage", radiusVariance: 1),
+                            new TimedTransition(2400, "protect")
+                        ),
+                        new Shoot(3),
+                        new State("help",
+                            new Protect(0.8, "Goblin Mage", acquireRange: 12, protectionRange: 6, reprotectRange: 3),
+                            new Follow(0.8, acquireRange: 10.5, range: 1.5),
+                            new EntityNotExistsTransition("Goblin Mage", 15, "protect")
+                        )
+                    ),
+                    new ItemLoot("Health Potion", 0.04)
+                )
+            .Init("Goblin Warrior",
+                    new State(
+                        new State("protect",
+                            new Protect(0.8, "Goblin Mage", acquireRange: 12, protectionRange: 1.5, reprotectRange: 1.5),
+                            new TimedTransition(1200, "scatter")
+                        ),
+                        new State("scatter",
+                            new Orbit(0.8, 7, target: "Goblin Mage", radiusVariance: 1),
+                            new TimedTransition(2400, "protect")
+                        ),
+                        new Shoot(3),
+                        new State("help",
+                            new Protect(0.8, "Goblin Mage", acquireRange: 12, protectionRange: 6, reprotectRange: 3),
+                            new Follow(0.8, acquireRange: 10.5, range: 1.5),
+                            new EntityNotExistsTransition("Goblin Mage", 15, "protect")
+                        )
+                    ),
+                    new ItemLoot("Health Potion", 0.04)
+                )
+            .Init("Goblin Mage",
+                    new State(
+                        new State("unharmed",
+                            new Shoot(8, projectileIndex: 0, predictive: 0.35, coolDown: 1000),
+                            new Shoot(8, projectileIndex: 1, predictive: 0.35, coolDown: 1300),
+                            new Prioritize(
+                                new StayAbove(0.4, 16),
+                                new Follow(0.5, acquireRange: 10.5, range: 4),
+                                new Wander(0.4)
+                            ),
+                            new HpLessTransition(0.65, "activate_horde")
+                        ),
+                        new State("activate_horde",
+                            new Shoot(8, projectileIndex: 0, predictive: 0.25, coolDown: 1000),
+                            new Shoot(8, projectileIndex: 1, predictive: 0.25, coolDown: 1000),
+                            new Flash(0xff484848, 0.6, 5000),
+                            new Order(12, "Goblin Rogue", "help"),
+                            new Order(12, "Goblin Warrior", "help"),
+                            new Prioritize(
+                                new StayAbove(0.4, 16),
+                                new StayBack(0.5, distance: 6)
                             )
                         ),
-                        IfNot.Instance(
-                            Chasing.Instance(6, 10, 4, null),
-                            SimpleWandering.Instance(4)
+                        new Spawn("Goblin Rogue", maxChildren: 7, coolDown: 12000),
+                        new Spawn("Goblin Warrior", maxChildren: 7, coolDown: 12000)
+                    ),
+                    new TierLoot(3, ItemType.Weapon, 0.3),
+                    new TierLoot(3, ItemType.Armor, 0.3),
+                    new TierLoot(1, ItemType.Ring, 0.09),
+                    new TierLoot(1, ItemType.Ability, 0.38),
+                    new ItemLoot("Health Potion", 0.02),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+
+            .Init("Easily Enraged Bunny",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(0.4, 15),
+                            new Follow(0.7, acquireRange: 9.5, range: 1)
+                        ),
+                        new TransformOnDeath("Enraged Bunny")
+                    )
+                )
+            .Init("Enraged Bunny",
+                    new State(
+                        new Shoot(9, predictive: 0.5, coolDown: 400),
+                        new State("red",
+                            new Flash(0xff0000, 1.5, 1),
+                            new TimedTransition(1600, "yellow")
+                        ),
+                        new State("yellow",
+                            new Flash(0xffff33, 1.5, 1),
+                            new TimedTransition(1600, "orange")
+                        ),
+                        new State("orange",
+                            new Flash(0xff9900, 1.5, 1),
+                            new TimedTransition(1600, "red")
+                        ),
+                        new Prioritize(
+                            new StayAbove(0.4, 15),
+                            new Follow(0.85, acquireRange: 9, range: 2.5),
+                            new Wander(0.85)
                         )
                     ),
-                    Cooldown.Instance(10000, SimpleAttack.Instance(10)),
-                    Rand.Instance(
-                        Reproduce.Instance(0x60a, 4, 10000),
-                        Reproduce.Instance(0x60c, 5, 8000)
+                    new ItemLoot("Health Potion", 0.01),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+
+            .Init("Forest Nymph",
+                    new State(
+                        new State("circle",
+                            new Shoot(4, projectileIndex: 0, count: 1, predictive: 0.1, coolDown: 900),
+                            new Prioritize(
+                                new StayAbove(0.4, 25),
+                                new Follow(0.9, acquireRange: 11, range: 3.5, duration: 1000, coolDown: 5000),
+                                new Orbit(1.3, 3.5, acquireRange: 12),
+                                new Wander(0.7)
+                            ),
+                            new TimedTransition(4000, "dart_away")
+                        ),
+                        new State("dart_away",
+                            new Shoot(9, projectileIndex: 1, count: 6, fixedAngle: 20, shootAngle: 60, coolDown: 1400),
+                            new Wander(0.4),
+                            new TimedTransition(3600, "circle")
+                        )
                     ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.10, (ILoot)new TierLoot(3, ItemType.Weapon)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(3, ItemType.Armor)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance)
+                    new ItemLoot("Health Potion", 0.03),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+
+            .Init("Sandsman King",
+                    new State(
+                        new Shoot(10, coolDown: 10000),
+                        new Prioritize(
+                            new StayAbove(0.4, 15),
+                            new Follow(0.6, range: 4),
+                            new Wander(0.4)
+                        ),
+                        new Spawn("Sandsman Archer", maxChildren: 2, coolDown: 10000),
+                        new Spawn("Sandsman Sorcerer", maxChildren: 3, coolDown: 8000)
+                    ),
+                    new TierLoot(3, ItemType.Weapon, 0.3),
+                    new TierLoot(3, ItemType.Armor, 0.3),
+                    new TierLoot(1, ItemType.Ring, 0.11),
+                    new TierLoot(1, ItemType.Ability, 0.39),
+                    new ItemLoot("Health Potion", 0.04)
+                )
+            .Init("Sandsman Sorcerer",
+                    new State(
+                        new Shoot(10, projectileIndex: 0, coolDown: 5000),
+                        new Shoot(5, projectileIndex: 1, coolDown: 400),
+                        new Prioritize(
+                            new Protect(1.2, "Sandsman King", acquireRange: 15, protectionRange: 6, reprotectRange: 5),
+                            new Wander(0.4)
+                        )
+                    ),
+                    new ItemLoot("Magic Potion", 0.03)
+                )
+            .Init("Sandsman Archer",
+                    new State(
+                        new Shoot(10, predictive: 0.5),
+                        new Prioritize(
+                            new Orbit(0.8, 6.5, acquireRange: 15, target: "Sandsman King", radiusVariance: 0.5),
+                            new Wander(0.4)
+                        )
+                    ),
+                    new ItemLoot("Magic Potion", 0.03)
+                )
+
+            .Init("Giant Crab",
+                    new State(
+                        new State("idle",
+                            new Prioritize(
+                                new StayAbove(0.6, 13),
+                                new Wander(0.6)
+                            ),
+                            new PlayerWithinTransition(11, "scuttle")
+                        ),
+                        new State("scuttle",
+                            new Shoot(9, projectileIndex: 0, coolDown: new Cooldown(1000, 0)),
+                            new Shoot(9, projectileIndex: 1, coolDown: new Cooldown(1000, 0)),
+                            new Shoot(9, projectileIndex: 2, coolDown: new Cooldown(1000, 0)),
+                            new Shoot(9, projectileIndex: 3, coolDown: new Cooldown(1000, 0)),
+                            new State("move",
+                                new Prioritize(
+                                    new Follow(1, acquireRange: 10.6, range: 2),
+                                    new StayAbove(1, 25),
+                                    new Wander(0.6)
+                                ),
+                                new TimedTransition(400, "pause")
+                            ),
+                            new State("pause",
+                                new TimedTransition(200, "move")
+                            ),
+                            new TimedTransition(4700, "tri-spit")
+                        ),
+                        new State("tri-spit",
+                            new Shoot(9, projectileIndex: 4, predictive: 0.5, coolDownOffset: 1200, coolDown: 90000),
+                            new Shoot(9, projectileIndex: 4, predictive: 0.5, coolDownOffset: 1800, coolDown: 90000),
+                            new Shoot(9, projectileIndex: 4, predictive: 0.5, coolDownOffset: 2400, coolDown: 90000),
+                            new State("move",
+                                new Prioritize(
+                                    new Follow(1, acquireRange: 10.6, range: 2),
+                                    new StayAbove(1, 25),
+                                    new Wander(0.6)
+                                ),
+                                new TimedTransition(400, "pause")
+                            ),
+                            new State("pause",
+                                new TimedTransition(200, "move")
+                            ),
+                            new TimedTransition(3200, "idle")
+                        )
+                    ),
+                    new TierLoot(2, ItemType.Weapon, 0.14),
+                    new TierLoot(2, ItemType.Armor, 0.19),
+                    new TierLoot(1, ItemType.Ring, 0.05),
+                    new TierLoot(1, ItemType.Ability, 0.28),
+                    new ItemLoot("Health Potion", 0.02),
+                    new ItemLoot("Magic Potion", 0.02)
+                )
+
+            .Init("Sand Devil",
+                    new State(
+                        new State("wander",
+                            new Shoot(8, predictive: 0.3, coolDown: 700),
+                            new Prioritize(
+                                new StayAbove(0.7, 10),
+                                new Follow(0.7, acquireRange: 10, range: 2.2),
+                                new Wander(0.7)
+                            ),
+                            new TimedTransition(3000, "circle")
+                        ),
+                        new State("circle",
+                            new Shoot(8, predictive: 0.3, coolDownOffset: 1000, coolDown: 1000),
+                            new Orbit(0.7, 4, acquireRange: 9),
+                            new TimedTransition(3100, "wander")
                         )
                     )
-                ))
-            .Init(0x60a, Behaves("Sandsman Archer",
-                    IfNot.Instance(
-                        Chasing.Instance(8, 10, 6, 0x60d),
-                        SimpleWandering.Instance(4)
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x60c, Behaves("Sandsman Sorcerer",
-                    IfNot.Instance(
-                        Chasing.Instance(12, 10, 6, 0x60d),
-                        SimpleWandering.Instance(4)
-                    ),
-                    Rand.Instance(
-                        Cooldown.Instance(5000, SimpleAttack.Instance(10, 0)),
-                        Cooldown.Instance(400, SimpleAttack.Instance(5, 1))
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x6c4, Behaves("Giant Crab",
-                    new QueuedBehavior(
-                        Timed.Instance(1000, False.Instance(IfNot.Instance(
-                            Chasing.Instance(8, 10, 2, null),
-                            SimpleWandering.Instance(4)
-                        ))),
-                        Cooldown.Instance(1000)
-                    ),
-                    new QueuedBehavior(
-                        Cooldown.Instance(1000, new RunBehaviors(
-                            SimpleAttack.Instance(10, 0),
-                            SimpleAttack.Instance(10, 1),
-                            SimpleAttack.Instance(10, 2),
-                            SimpleAttack.Instance(10, 3)
-                        )),
-                        Cooldown.Instance(1000, new RunBehaviors(
-                            SimpleAttack.Instance(10, 0),
-                            SimpleAttack.Instance(10, 1),
-                            SimpleAttack.Instance(10, 2),
-                            SimpleAttack.Instance(10, 3)
-                        )),
-                        Cooldown.Instance(1000, new RunBehaviors(
-                            SimpleAttack.Instance(10, 0),
-                            SimpleAttack.Instance(10, 1),
-                            SimpleAttack.Instance(10, 2),
-                            SimpleAttack.Instance(10, 3)
-                        )),
-                        Cooldown.Instance(1000, new RunBehaviors(
-                            SimpleAttack.Instance(10, 0),
-                            SimpleAttack.Instance(10, 1),
-                            SimpleAttack.Instance(10, 2),
-                            SimpleAttack.Instance(10, 3)
-                        )),
-                        Cooldown.Instance(1000, new RunBehaviors(
-                            SimpleAttack.Instance(10, 0),
-                            SimpleAttack.Instance(10, 1),
-                            SimpleAttack.Instance(10, 2),
-                            SimpleAttack.Instance(10, 3)
-                        )),
-                        Cooldown.Instance(500, SimpleAttack.Instance(10, 4)),
-                        Cooldown.Instance(500, SimpleAttack.Instance(10, 4)),
-                        Cooldown.Instance(500, SimpleAttack.Instance(10, 4))
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.10, (ILoot)new TierLoot(2, ItemType.Weapon)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(2, ItemType.Armor)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ring)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ))
-            .Init(0x6c7, Behaves("Sand Devil",
-                    IfNot.Instance(
-                        Timed.Instance(2500, Circling.Instance(2, 10, 8, null)),
-                        Timed.Instance(1000, SimpleWandering.Instance(8))
-                    ),
-                    Cooldown.Instance(500, SimpleAttack.Instance(10)),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.03, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.02, (ILoot)MpPotionLoot.Instance)
-                        )
-                    )
-                ));
+                )
+                ;
     }
 }

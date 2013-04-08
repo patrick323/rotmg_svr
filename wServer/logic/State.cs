@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using wServer.realm;
 
 namespace wServer.logic
 {
-    public class State
+    public interface IStateChildren { }
+    public class State : IStateChildren
     {
-        public State(params object[] children) : this("", children) { }
-        public State(string name, params object[] children)
+        public State(params IStateChildren[] children) : this("", children) { }
+        public State(string name, params IStateChildren[] children)
         {
             this.Name = name;
-            States = new List< State>();
+            States = new List<State>();
             Behaviors = new List<Behavior>();
             Transitions = new List<Transition>();
             foreach (var i in children)
@@ -37,6 +39,16 @@ namespace wServer.logic
         public IList<Behavior> Behaviors { get; private set; }
         public IList<Transition> Transitions { get; private set; }
 
+        public event EventHandler<BehaviorEventArgs> Death;
+
+        internal void OnDeath(BehaviorEventArgs e)
+        {
+            if (Death != null)
+                Death(this, e);
+            if (Parent != null)
+                Parent.OnDeath(e);
+        }
+
         internal void Resolve(Dictionary<string, State> states)
         {
             states[Name] = this;
@@ -45,6 +57,8 @@ namespace wServer.logic
             foreach (var i in States)
                 foreach (var j in i.Transitions)
                     j.Resolve(states);
+            foreach (var j in Behaviors)
+                j.Resolve(this);
         }
 
         void ResolveTransition(Dictionary<string, State> states)
@@ -59,5 +73,16 @@ namespace wServer.logic
         }
 
         public static readonly State NullState = new State();
+    }
+
+    public class BehaviorEventArgs : EventArgs
+    {
+        public BehaviorEventArgs(Entity host, RealmTime time)
+        {
+            this.Host = host;
+            this.Time = time;
+        }
+        public Entity Host { get; private set; }
+        public RealmTime Time { get; private set; }
     }
 }

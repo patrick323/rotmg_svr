@@ -115,6 +115,9 @@
     <Compile Include="cliPackets\PongPacket.cs" />
     <Compile Include="Empty.cs" />
     <Compile Include="logic\Behavior.cs" />
+    <Compile Include="logic\behaviors\BackAndForth.cs" />
+    <Compile Include="logic\behaviors\Buzz.cs" />
+    <Compile Include="logic\behaviors\Orbit.cs" />
     <Compile Include="logic\behaviors\Order.cs" />
     <Compile Include="logic\behaviors\Grenade.cs" />
     <Compile Include="logic\behaviors\StayAbove.cs" />
@@ -130,10 +133,12 @@
     <Compile Include="logic\behaviors\Reproduce.cs" />
     <Compile Include="logic\behaviors\SetAltTexture.cs" />
     <Compile Include="logic\BehaviorDb.cs" />
+    <Compile Include="logic\behaviors\TransformOnDeath.cs" />
     <Compile Include="logic\behaviors\Wander.cs" />
     <Compile Include="logic\BehaviorUtils.cs" />
     <Compile Include="logic\Cooldown.cs" />
     <Compile Include="logic\DamageCounter.cs" />
+    <Compile Include="logic\db\BehaviorDb.Lowland.cs" />
     <Compile Include="logic\db\BehaviorDb.Shore.cs" />
     <Compile Include="logic\db\BehaviorDb.Tutorial.cs" />
     <Compile Include="logic\CycleBehavior.cs" />
@@ -141,6 +146,7 @@
     <Compile Include="logic\loot\Loots.cs" />
     <Compile Include="logic\State.cs" />
     <Compile Include="logic\Transition.cs" />
+    <Compile Include="logic\transitions\EntityNotExistsTransition.cs" />
     <Compile Include="logic\transitions\PlayerWithinTransition.cs" />
     <Compile Include="logic\transitions\HpLessTransition.cs" />
     <Compile Include="logic\transitions\TimedTransition.cs" />

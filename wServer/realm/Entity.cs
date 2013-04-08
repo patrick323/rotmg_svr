@@ -167,10 +167,12 @@ namespace wServer.realm
             while (state.States.Count > 0)  //always the first deepest sub-state
                 state = CurrentState = state.States[0];
 
-            bool entry = stateEntry != null;
+            var localEntry = stateEntry;
+            bool entry = localEntry != null;
+            bool transited = false;
             while (state != null)
             {
-                if (stateEntry != null && state == stateEntry.Parent)
+                if (localEntry != null && state == localEntry.Parent)
                     entry = false;
                 foreach (var i in state.Behaviors)
                 {
@@ -178,14 +180,22 @@ namespace wServer.realm
                         i.OnStateEntry(this, time);
                     i.Tick(this, time);
                 }
-                foreach (var i in state.Transitions)
-                {
-                    if (i.Tick(this, time))
-                        return;
-                }
+                if (!transited)
+                    foreach (var i in state.Transitions)
+                        if (i.Tick(this, time))
+                        {
+                            transited = true;
+                            break;
+                        }
                 state = state.Parent;
             }
-            stateEntry = null;
+            if (!transited)
+                stateEntry = null;
+            else if (state != null)
+            {
+                while (state.States.Count > 0)
+                    state = CurrentState = state.States[0];
+            }
         }
 
 

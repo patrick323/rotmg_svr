@@ -20,12 +20,14 @@ namespace wServer.logic.behaviors
         double? defaultAngle;
         double predictive;
         int projectileIndex;
+        int coolDownOffset;
         Cooldown coolDown;
 
         public Shoot(double radius, int count = 1, double? shootAngle = null,
             int projectileIndex = 0, double? fixedAngle = null,
             double angleOffset = 0, double? defaultAngle = null,
-            double predictive = 0, Cooldown coolDown = new Cooldown())
+            double predictive = 0, int coolDownOffset = 0, 
+            Cooldown coolDown = new Cooldown())
         {
             this.radius = radius;
             this.count = count;
@@ -35,12 +37,13 @@ namespace wServer.logic.behaviors
             this.defaultAngle = defaultAngle * Math.PI / 180;
             this.projectileIndex = projectileIndex;
             this.predictive = predictive;
+            this.coolDownOffset = coolDownOffset;
             this.coolDown = coolDown.Normalize();
         }
 
         protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {
-            state = 0;
+            state = coolDownOffset;
         }
 
         static double Predict(Entity host, Entity target, ProjectileDesc desc)
