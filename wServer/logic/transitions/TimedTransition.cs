@@ -21,7 +21,7 @@ namespace wServer.logic.transitions
         protected override bool TickCore(Entity host, RealmTime time, ref object state)
         {
             int cool;
-            if (state == null) cool = this.time;
+            if (state == null) cool = Random.Next(this.time);
             else cool = (int)state;
 
             bool ret = false;

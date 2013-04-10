@@ -37,5 +37,16 @@ namespace wServer.logic
         {
             TargetState = states[targetStateName];
         }
+
+        [ThreadStatic]
+        private static Random rand;
+        protected static Random Random
+        {
+            get
+            {
+                if (rand == null) rand = new Random();
+                return rand;
+            }
+        }
     }
 }

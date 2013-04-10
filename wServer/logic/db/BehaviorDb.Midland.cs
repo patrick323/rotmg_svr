@@ -176,6 +176,7 @@ namespace wServer.logic
                         new Spawn("Warrior Wasp", maxChildren: 2, coolDown: 4400),
                         new State("idle",
                             new StayAbove(0.4, 60),
+                            new Wander(0.55),
                             new PlayerWithinTransition(10, "froth")
                         ),
                         new State("froth",
@@ -299,6 +300,41 @@ namespace wServer.logic
                         ),
                         new Decay(9000)
                     )
+                )
+
+            .Init("Swarm",
+                    new State(
+                        new State("circle",
+                            new Prioritize(
+                                new StayAbove(0.4, 60),
+                                new Follow(4, acquireRange: 11, range: 3.5, duration: 1000, coolDown: 5000),
+                                new Orbit(1.9, 3.5, acquireRange: 12),
+                                new Wander(0.4)
+                            ),
+                            new Shoot(4, predictive: 0.1, coolDown: 500),
+                            new TimedTransition(3000, "dart_away")
+                        ),
+                        new State("dart_away",
+                            new Prioritize(
+                                new StayAbove(0.4, 60),
+                                new StayBack(2, distance: 5),
+                                new Wander(0.4)
+                            ),
+                            new Shoot(8, count: 5, shootAngle: 72, fixedAngle: 20, coolDown: 100000, coolDownOffset: 800),
+                            new Shoot(8, count: 5, shootAngle: 72, fixedAngle: 56, coolDown: 100000, coolDownOffset: 1400),
+                            new TimedTransition(1600, "circle")
+                        ),
+                        new Reproduce(densityMax: 1, densityRadius: 100)
+                    ),
+                    new TierLoot(3, ItemType.Weapon, 0.22),
+                    new TierLoot(4, ItemType.Weapon, 0.05),
+                    new TierLoot(3, ItemType.Armor, 0.22),
+                    new TierLoot(4, ItemType.Armor, 0.12),
+                    new TierLoot(5, ItemType.Armor, 0.02),
+                    new TierLoot(1, ItemType.Ring, 0.1),
+                    new TierLoot(1, ItemType.Ability, 0.21),
+                    new ItemLoot("Health Potion", 0.24),
+                    new ItemLoot("Magic Potion", 0.07)
                 )
 
             .Init("Black Bat",
@@ -704,6 +740,7 @@ namespace wServer.logic
                     new State(
                         new State("idle",
                             new StayAbove(0.6, 60),
+                            new Wander(0.6),
                             new PlayerWithinTransition(10, "charge")
                         ),
                         new State("charge",
@@ -791,7 +828,7 @@ namespace wServer.logic
 
                             new Taunt("GRRRRAAGH!", 0.7),
                             new ChangeSize(20, 170),
-                            new Flash(0xffff0000,0.4,5000),
+                            new Flash(0xffff0000, 0.4, 5000),
 
                             new Prioritize(
                                 new Follow(0.65, acquireRange: 9, range: 2),

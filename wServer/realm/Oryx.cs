@@ -43,7 +43,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.LowPlains, Tuple.Create(
-                250, new []
+                200, new []
                 {
                     Tuple.Create("Hobbit Mage", 0.5),
                     Tuple.Create("Undead Hobbit Mage", 0.4),
@@ -51,7 +51,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.LowForest, Tuple.Create(
-                250, new []
+                200, new []
                 {
                     Tuple.Create("Elf Wizard", 0.2),
                     Tuple.Create("Goblin Mage", 0.2),
@@ -68,7 +68,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.MidPlains, Tuple.Create(
-                200, new []
+                150, new []
                 {
                     Tuple.Create("Fire Sprite", 0.1),
                     Tuple.Create("Ice Sprite", 0.1),
@@ -85,7 +85,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.MidForest, Tuple.Create(
-                200, new []
+                150, new []
                 {
                     Tuple.Create("Dwarf King", 0.3),
                     Tuple.Create("Metal Golem", 0.05),
@@ -97,7 +97,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.MidSand, Tuple.Create(
-                200, new []
+                300, new []
                 {
                     Tuple.Create("Desert Werewolf", 0.25),
                     Tuple.Create("Fire Golem", 0.1),

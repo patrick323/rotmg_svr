@@ -216,6 +216,7 @@ namespace wServer.logic
             .Init("Elf Wizard",
                     new State(
                         new State("idle",
+                            new Wander(0.4),
                             new PlayerWithinTransition(11, "move1")
                         ),
                         new State("move1",
@@ -258,7 +259,7 @@ namespace wServer.logic
                     new State(
                         new Shoot(10, predictive: 1),
                         new Prioritize(
-                            new Orbit(0.5, 3),
+                            new Orbit(0.5, 3, speedVariance: 0.1, radiusVariance: 0.5),
                             new Protect(1.2, "Elf Wizard", acquireRange: 30, protectionRange: 10, reprotectRange: 1),
                             new Wander(0.4)
                         )
@@ -270,8 +271,8 @@ namespace wServer.logic
                         new Shoot(10, predictive: 1),
                         new Prioritize(
                             new Protect(1.2, "Elf Wizard", acquireRange: 15, protectionRange: 10, reprotectRange: 5),
-                            new Buzz(4, dist: 1, coolDown: 2000),
-                            new Orbit(0.6, 3),
+                            new Buzz(1, dist: 1, coolDown: 2000),
+                            new Orbit(0.6, 3, speedVariance: 0.1, radiusVariance: 0.5),
                             new Wander(0.4)
                         )
                     ),
@@ -296,7 +297,7 @@ namespace wServer.logic
                             new TimedTransition(1200, "scatter")
                         ),
                         new State("scatter",
-                            new Orbit(0.8, 3.5, target: "Goblin Mage", radiusVariance: 1),
+                            new Orbit(0.8, 7, target: "Goblin Mage", radiusVariance: 1),
                             new TimedTransition(2400, "protect")
                         ),
                         new Shoot(3),
@@ -315,7 +316,7 @@ namespace wServer.logic
                             new TimedTransition(1200, "scatter")
                         ),
                         new State("scatter",
-                            new Orbit(0.8, 3.5, target: "Goblin Mage", radiusVariance: 1),
+                            new Orbit(0.8, 7, target: "Goblin Mage", radiusVariance: 1),
                             new TimedTransition(2400, "protect")
                         ),
                         new Shoot(3),
