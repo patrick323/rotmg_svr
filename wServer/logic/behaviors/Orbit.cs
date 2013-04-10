@@ -59,7 +59,7 @@ namespace wServer.logic.behaviors
                     angle = Math.Atan2(host.Y - entity.Y + (Random.NextDouble() * 2 - 1), host.X - entity.X + (Random.NextDouble() * 2 - 1));
                 else
                     angle = Math.Atan2(host.Y - entity.Y, host.X - entity.X);
-                var angularSpd = host.GetSpeed(s.Speed) / s.Radius + 1;
+                var angularSpd = host.GetSpeed(s.Speed) / s.Radius;
                 angle += angularSpd * (time.thisTickTimes / 1000f);
 
                 double x = entity.X + Math.Cos(angle) * radius;

@@ -7,7 +7,7 @@ using wServer.realm.entities;
 
 namespace wServer.logic.behaviors
 {
-    class Spawn : Behavior
+    class SpawnGroup : Behavior
     {
         //State storage: Spawn state
         class SpawnState
@@ -19,11 +19,13 @@ namespace wServer.logic.behaviors
         int maxChildren;
         int initialSpawn;
         Cooldown coolDown;
-        short children;
+        short[] children;
 
-        public Spawn(string children, int maxChildren = 5, double initialSpawn = 0.5, Cooldown coolDown = new Cooldown())
+        public SpawnGroup(string group, int maxChildren = 5, double initialSpawn = 0.5, Cooldown coolDown = new Cooldown())
         {
-            this.children = (short)XmlDatas.IdToType[children];
+            this.children = XmlDatas.ObjectDescs.Values
+                .Where(x => x.Group == group)
+                .Select(x => x.ObjectType).ToArray();
             this.maxChildren = maxChildren;
             this.initialSpawn = (int)(maxChildren * initialSpawn);
             this.coolDown = coolDown.Normalize(0);
@@ -38,7 +40,7 @@ namespace wServer.logic.behaviors
             };
             for (int i = 0; i < initialSpawn; i++)
             {
-                Entity entity = Entity.Resolve(children);
+                Entity entity = Entity.Resolve(children[Random.Next(children.Length)]);
 
                 entity.Move(host.X, host.Y);
                 (entity as Enemy).Terrain = (host as Enemy).Terrain;
@@ -52,7 +54,7 @@ namespace wServer.logic.behaviors
 
             if (spawn.RemainingTime <= 0 && spawn.CurrentNumber < maxChildren)
             {
-                Entity entity = Entity.Resolve(children);
+                Entity entity = Entity.Resolve(children[Random.Next(children.Length)]);
 
                 entity.Move(host.X, host.Y);
                 (entity as Enemy).Terrain = (host as Enemy).Terrain;
