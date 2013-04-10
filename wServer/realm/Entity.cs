@@ -178,8 +178,10 @@ namespace wServer.realm
                 {
                     if (entry)
                         i.OnStateEntry(this, time);
+                    if (Owner == null) break;
                     i.Tick(this, time);
                 }
+                if (Owner == null) break;
                 if (!transited)
                     foreach (var i in state.Transitions)
                         if (i.Tick(this, time))
