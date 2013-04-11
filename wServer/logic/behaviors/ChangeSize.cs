@@ -38,7 +38,7 @@ namespace wServer.logic.behaviors
                         host.Size = target;
                     host.UpdateCount++;
                 }
-                cool = 1000;
+                cool = 150;
             }
             else
                 cool -= time.thisTickTimes;

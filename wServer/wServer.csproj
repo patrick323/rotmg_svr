@@ -119,6 +119,8 @@
     <Compile Include="logic\behaviors\Buzz.cs" />
     <Compile Include="logic\behaviors\ChangeSize.cs" />
     <Compile Include="logic\behaviors\Charge.cs" />
+    <Compile Include="logic\behaviors\ConditionalEffect.cs" />
+    <Compile Include="logic\behaviors\StayCloseToSpawn.cs" />
     <Compile Include="logic\behaviors\Transform.cs" />
     <Compile Include="logic\behaviors\SpawnGroup.cs" />
     <Compile Include="logic\behaviors\Decay.cs" />
@@ -145,6 +147,7 @@
     <Compile Include="logic\BehaviorUtils.cs" />
     <Compile Include="logic\Cooldown.cs" />
     <Compile Include="logic\DamageCounter.cs" />
+    <Compile Include="logic\db\BehaviorDb.Highland.cs" />
     <Compile Include="logic\db\BehaviorDb.Lowland.cs" />
     <Compile Include="logic\db\BehaviorDb.Midland.cs" />
     <Compile Include="logic\db\BehaviorDb.Golems.cs" />

@@ -38,6 +38,22 @@ namespace wServer.logic
         }
         protected virtual void OnStateEntry(Entity host, RealmTime time, ref object state)
         { }
+
+        public void OnStateExit(Entity host, RealmTime time)
+        {
+            object state;
+            if (!host.StateStorage.TryGetValue(this, out state))
+                state = null;
+
+            OnStateExit(host, time, ref state);
+
+            if (state == null)
+                host.StateStorage.Remove(this);
+            else
+                host.StateStorage[this] = state;
+        }
+        protected virtual void OnStateExit(Entity host, RealmTime time, ref object state)
+        { }
         protected internal virtual void Resolve(State parent) { }
 
         [ThreadStatic]

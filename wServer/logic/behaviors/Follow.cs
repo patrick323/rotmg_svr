@@ -35,7 +35,7 @@ namespace wServer.logic.behaviors
             this.acquireRange = (float)acquireRange;
             this.range = (float)range;
             this.duration = duration;
-            this.coolDown = coolDown.Normalize(0);
+            this.coolDown = coolDown.Normalize(duration == 0 ? 0 : 1000);
         }
 
         protected override void TickCore(Entity host, RealmTime time, ref object state)
