@@ -112,7 +112,7 @@ namespace wServer.logic
 
                         new State("bold",
                             new State("warn_about_grenades",
-                                new Taunt("Catch!", probability: 0.15),
+                                new Taunt(0.15, "Catch!"),
                                 new TimedTransition(400, "wimpy_grenade1")
                             ),
                             new State("wimpy_grenade1",
@@ -143,7 +143,7 @@ namespace wServer.logic
                             new HpLessTransition(0.45, "meek")
                         ),
                         new State("meek",
-                            new Taunt("Forget this... run for it!", probability: 0.5),
+                            new Taunt(0.5, "Forget this... run for it!"),
                             new StayBack(0.5, 6),
                             new Order(10, "Bandit", "escape"),
 

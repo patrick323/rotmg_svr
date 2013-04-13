@@ -482,7 +482,7 @@ namespace wServer.logic
                             new TimedTransition(3400, "Engaging")
                         ),
                         new State("Engaging",
-                            new Taunt("You'll taste my axe!", 0.2),
+                            new Taunt(0.2, "You'll taste my axe!"),
                             new Prioritize(
                                 new Follow(1.0, acquireRange: 15, range: 1),
                                 new Wander(0.4)
@@ -826,7 +826,7 @@ namespace wServer.logic
                         new State("enraged",
                             new Shoot(8, projectileIndex: 0, predictive: 0.3, coolDown: 1000, coolDownOffset: 500),
 
-                            new Taunt("GRRRRAAGH!", 0.7),
+                            new Taunt(0.7, "GRRRRAAGH!"),
                             new ChangeSize(20, 170),
                             new Flash(0xffff0000, 0.4, 5000),
 

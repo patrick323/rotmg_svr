@@ -150,11 +150,17 @@
     <Compile Include="logic\BehaviorUtils.cs" />
     <Compile Include="logic\Cooldown.cs" />
     <Compile Include="logic\DamageCounter.cs" />
+    <Compile Include="logic\db\BehaviorDb.Cyclops.cs" />
+    <Compile Include="logic\db\BehaviorDb.Deathmage.cs" />
+    <Compile Include="logic\db\BehaviorDb.ForbiddenJungle.cs" />
     <Compile Include="logic\db\BehaviorDb.Highland.cs" />
     <Compile Include="logic\db\BehaviorDb.Lowland.cs" />
     <Compile Include="logic\db\BehaviorDb.Midland.cs" />
     <Compile Include="logic\db\BehaviorDb.Golems.cs" />
     <Compile Include="logic\db\BehaviorDb.Mountain.cs" />
+    <Compile Include="logic\db\BehaviorDb.Oasis.cs" />
+    <Compile Include="logic\db\BehaviorDb.Phoenix.cs" />
+    <Compile Include="logic\db\BehaviorDb.RedDemon.cs" />
     <Compile Include="logic\db\BehaviorDb.Shore.cs" />
     <Compile Include="logic\db\BehaviorDb.Tutorial.cs" />
     <Compile Include="logic\CycleBehavior.cs" />

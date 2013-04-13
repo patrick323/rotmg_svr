@@ -491,9 +491,9 @@ namespace wServer.logic
 
             .Init("Dragon Egg",
                     new State(
-                        new TransformOnDeath("White Dragon Whelp", 0.3),
-                        new TransformOnDeath("Juvenile White Dragon", 0.2),
-                        new TransformOnDeath("Adult White Dragon", 0.1)
+                        new TransformOnDeath("White Dragon Whelp", probability: 0.3),
+                        new TransformOnDeath("Juvenile White Dragon", probability: 0.2),
+                        new TransformOnDeath("Adult White Dragon", probability: 0.1)
                     )
                 )
             .Init("White Dragon Whelp",
@@ -694,7 +694,7 @@ namespace wServer.logic
             .Init("Urgle",
                     new State(
                         new Prioritize(
-                            new StayCloseToSpawn(0.8,3),
+                            new StayCloseToSpawn(0.8, 3),
                             new Wander(0.5)
                         ),
                         new Shoot(8, predictive: 0.3),

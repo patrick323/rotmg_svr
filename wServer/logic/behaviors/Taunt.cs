@@ -11,21 +11,84 @@ namespace wServer.logic.behaviors
 {
     class Taunt : Behavior
     {
-        //State storage: none
+        //State storage: time
 
-        float probability;
-        string text;
-        public Taunt(string text, double probability = 1)
+        float probability = 1;
+        bool broadcast = false;
+        Cooldown cooldown = new Cooldown(0, 0);
+        string[] text;
+
+        public Taunt(params string[] text)
+        {
+            this.probability = (float)probability;
+        }
+
+        public Taunt(double probability, params string[] text)
         {
             this.text = text;
             this.probability = (float)probability;
         }
+        public Taunt(bool broadcast, params string[] text)
+        {
+            this.text = text;
+            this.broadcast = broadcast;
+        }
+        public Taunt(Cooldown cooldown, params string[] text)
+        {
+            this.text = text;
+            this.cooldown = cooldown;
+        }
 
-        protected override void TickCore(Entity host, RealmTime time, ref object state) { }
+        public Taunt(double probability, bool broadcast, params string[] text)
+        {
+            this.text = text;
+            this.probability = (float)probability;
+            this.broadcast = broadcast;
+        }
+        public Taunt(double probability, Cooldown cooldown, params string[] text)
+        {
+            this.text = text;
+            this.probability = (float)probability;
+            this.cooldown = cooldown;
+        }
+        public Taunt(bool broadcast, Cooldown cooldown, params string[] text)
+        {
+            this.text = text;
+            this.broadcast = broadcast;
+            this.cooldown = cooldown;
+        }
+
+        public Taunt(double probability, bool broadcast, Cooldown cooldown, params string[] text)
+        {
+            this.text = text;
+            this.probability = (float)probability;
+            this.broadcast = broadcast;
+            this.cooldown = cooldown;
+        }
 
         protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {
-            var taunt = this.text;
+            state = null;
+        }
+
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
+        {
+            if (state != null && cooldown.CoolDown == 0) return;    //cooldown = 0 -> once per state entry
+
+            int c;
+            if (state == null) c = cooldown.Next(Random);
+            else c = (int)state;
+
+            c -= time.thisTickTimes;
+            state = c;
+            if (c > 0) return;
+
+            c = cooldown.Next(Random);
+            state = c;
+
+            if (Random.NextDouble() >= probability) return;
+
+            var taunt = text.Length == 1 ? text[0] : text[Random.Next(text.Length)];
             if (taunt.Contains("{PLAYER}"))
             {
                 Entity player = host.GetNearestEntity(10, null);
@@ -34,7 +97,7 @@ namespace wServer.logic.behaviors
             }
             taunt = taunt.Replace("{HP}", (host as Enemy).HP.ToString());
 
-            host.Owner.BroadcastPacket(new TextPacket()
+            var packet = new TextPacket()
             {
                 Name = "#" + (host.ObjectDesc.DisplayId ?? host.ObjectDesc.ObjectId),
                 ObjectId = host.Id,
@@ -43,7 +106,15 @@ namespace wServer.logic.behaviors
                 Recipient = "",
                 Text = taunt,
                 CleanText = ""
-            }, null);
+            };
+            if (broadcast)
+                host.Owner.BroadcastPacket(packet, null);
+            else
+                foreach (var i in host.Owner.PlayersCollision.HitTest(host.X, host.Y, 15))
+                {
+                    if (BehaviorUtils.Dist(host, i) < 15)
+                        (i as Player).Client.SendPacket(packet);
+                }
         }
     }
 }

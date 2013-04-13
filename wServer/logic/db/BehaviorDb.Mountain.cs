@@ -210,7 +210,7 @@ namespace wServer.logic
                         new State("Attacking",
                             new Shoot(8, coolDown: 2000),
                             new Heal(8, "Papers", coolDown: 1000),
-                            new Taunt("We are impervious to non-mystic attacks!", 0.5),
+                            new Taunt(0.5, "We are impervious to non-mystic attacks!"),
                             new TimedTransition(10000, "Waiting")
                         )
                     ),
@@ -261,7 +261,7 @@ namespace wServer.logic
                         new State("Attack",
                             new Shoot(8, count: 3, shootAngle: 20, coolDown: 800),
                             new Heal(8, "Rocks", coolDown: 1000),
-                            new Taunt("Silly squishy. We heal our brothers in a circle.", 0.5),
+                            new Taunt(0.5, "Silly squishy. We heal our brothers in a circle."),
                             new NoPlayerWithinTransition(30, "Idle"),
                             new HpLessTransition(0.2, "Explode")
                         ),
@@ -402,63 +402,5 @@ namespace wServer.logic
                     new ItemLoot("Magic Potion", 0.01)
                 )
                 ;
-        //.Init(0x6d8, Behaves("Leviathan",
-        //        new QueuedBehavior(
-        //            MagicEye.Instance,
-        //            Timed.Instance(2000,
-        //                Not.Instance(Chasing.Instance(8, 15, 5, null))
-        //            ),
-        //            new RemoveKey(Circling.Instance(5, 15, 8, null)),
-        //            Timed.Instance(2000,
-        //                False.Instance(Circling.Instance(5, 15, 8, null))
-        //            ),
-        //            Timed.Instance(2000,
-        //               Not.Instance(Tangential.Instance(8))
-        //            )
-        //        ),
-        //        new QueuedBehavior(
-        //            Timed.Instance(1500,
-        //                False.Instance(Cooldown.Instance(300,
-        //                    new RunBehaviors(
-        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 0 * (float)Math.PI / 180, projectileIndex: 0),
-        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 120 * (float)Math.PI / 180, projectileIndex: 0),
-        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 240 * (float)Math.PI / 180, projectileIndex: 0)
-        //                    )
-        //                ))
-        //            ),
-        //            Timed.Instance(1500,
-        //                False.Instance(Cooldown.Instance(300,
-        //                    new RunBehaviors(
-        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 60 * (float)Math.PI / 180, projectileIndex: 0),
-        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 180 * (float)Math.PI / 180, projectileIndex: 0),
-        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 300 * (float)Math.PI / 180, projectileIndex: 0)
-        //                    )
-        //                ))
-        //            ),
-        //            Timed.Instance(1500,
-        //                False.Instance(Cooldown.Instance(300,
-        //                    PredictiveMultiAttack.Instance(15, 15 * (float)Math.PI / 180, 2, 1, projectileIndex: 1)
-        //                ))
-        //            )   
-        //        ),
-        //        loot: new LootBehavior(LootDef.Empty,
-        //            Tuple.Create(1, CommonGodSoulBag),
-        //            Tuple.Create(360, new LootDef(0, 1, 0, 8,
-        //                Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Def))
-        //            ))
-        //        )
-        //    ))
-        //.Init(0x0d84, Behaves("Oryx Pet",   //Whoops!!
-        //        SimpleWandering.Instance(1),
-        //        loot: new LootBehavior(LootDef.Empty,
-        //            Tuple.Create(1, new LootDef(100, 1, 8, 16,
-        //                Tuple.Create(0.2, (ILoot)new TierLoot(14, ItemType.Weapon)),
-        //                Tuple.Create(0.2, (ILoot)new TierLoot(15, ItemType.Armor)),
-        //                Tuple.Create(0.2, (ILoot)new TierLoot(6, ItemType.Ability)),
-        //                Tuple.Create(0.2, (ILoot)new TierLoot(5, ItemType.Ring)),
-        //                Tuple.Create(0.2, (ILoot)new StatPotionsLoot(1, 2, 3))
-        //            ))
-        //        )
-        //    ));
     }
 }

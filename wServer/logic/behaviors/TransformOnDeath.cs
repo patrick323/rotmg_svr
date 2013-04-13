@@ -9,10 +9,14 @@ namespace wServer.logic.behaviors
     class TransformOnDeath : Behavior
     {
         short target;
+        int min;
+        int max;
         float probability;
-        public TransformOnDeath(string target, double probability = 1)
+        public TransformOnDeath(string target, int min = 1, int max = 1, double probability = 1)
         {
             this.target = XmlDatas.IdToType[target];
+            this.min = min;
+            this.max = max;
             this.probability = (float)probability;
         }
 
@@ -22,10 +26,14 @@ namespace wServer.logic.behaviors
             {
                 if (Random.NextDouble() < probability)
                 {
-                    Entity entity = Entity.Resolve(target);
+                    int count = Random.Next(min, max + 1);
+                    for (int i = 0; i < count; i++)
+                    {
+                        Entity entity = Entity.Resolve(target);
 
-                    entity.Move(e.Host.X, e.Host.Y);
-                    e.Host.Owner.EnterWorld(entity);
+                        entity.Move(e.Host.X, e.Host.Y);
+                        e.Host.Owner.EnterWorld(entity);
+                    }
                 }
             };
         }

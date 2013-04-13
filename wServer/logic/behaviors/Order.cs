@@ -36,12 +36,18 @@ namespace wServer.logic.behaviors
             return null;
         }
 
-        protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
+        bool Contains(State self, State target)
         {
-            foreach (var i in host.GetNearestEntities(range, children))
-                i.SwitchTo(targetState);
+            if (self == target) return true;
+            else if (self.Parent != null) return Contains(self.Parent, target);
+            else return false;
         }
 
-        protected override void TickCore(Entity host, RealmTime time, ref object state) { }
+        protected override void TickCore(Entity host, RealmTime time, ref object state)
+        {
+            foreach (var i in host.GetNearestEntities(range, children))
+                if (!Contains(i.CurrentState, targetState))
+                    i.SwitchTo(targetState);
+        }
     }
 }

@@ -16,19 +16,21 @@ namespace wServer.logic.behaviors
         double? angle;
         short child;
         Cooldown coolDown;
+        int coolDownOffset;
 
-        public TossObject(string child, double range = 5,
-            double? angle = null, Cooldown coolDown = new Cooldown())
+        public TossObject(string child, double range = 5, double? angle = null,
+            Cooldown coolDown = new Cooldown(), int coolDownOffset = 0)
         {
             this.child = XmlDatas.IdToType[child];
             this.range = range;
             this.angle = angle * Math.PI / 180;
             this.coolDown = coolDown.Normalize();
+            this.coolDownOffset = coolDownOffset;
         }
 
         protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {
-            state = 0;
+            state = coolDownOffset;
         }
 
         protected override void TickCore(Entity host, RealmTime time, ref object state)

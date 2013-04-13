@@ -3,132 +3,100 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ Phoenix = Behav()
-            .Init(0x675, Behaves("Phoenix Lord",
-                    SmoothWandering.Instance(1f, 3f),
-                    new RunBehaviors(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x677, 1, 3, 5),
-                                SpawnMinionImmediate.Instance(0x676, 1, 1, 2)
-                            )
+            .Init("Phoenix Lord",
+                    new State(
+                        new Shoot(10, count: 4, shootAngle: 7, predictive: 0.5, coolDown: 600),
+                        new Prioritize(
+                            new StayCloseToSpawn(0.3, 2),
+                            new Wander(0.4)
                         ),
-                        new QueuedBehavior(
-                            If.Instance(
-                                EntityGroupLesserThan.Instance(10, 25, "Pyre"),
-                                Rand.Instance(
-                                    SpawnMinionImmediate.Instance(0x677, 1, 2, 4),
-                                    SpawnMinionImmediate.Instance(0x676, 1, 1, 2),
-                                    NullBehavior.Instance
-                                )
-                            ),
-                            True.Instance(Rand.Instance(
-                                new RandomTaunt(0.1, "Alas, {PLAYER}, you will taste death but once!"),
-                                new RandomTaunt(0.1, "I have met many like you, {PLAYER}, in my thrice thousand years!"),
-                                new RandomTaunt(0.1, "Purge yourself, {PLAYER}, in the heat of my flames!"),
-                                new RandomTaunt(0.1, "The ashes of past heroes cover my plains!"),
-                                new RandomTaunt(0.1, "Some die and are ashes, but I am ever reborn!")
-                            )),
-                            Cooldown.Instance(2000)
+                        new SpawnGroup("Pyre", maxChildren: 16, coolDown: 5000),
+                        new Taunt(0.7, 10000,
+                             "Alas, {PLAYER}, you will taste death but once!",
+                             "I have met many like you, {PLAYER}, in my thrice thousand years!",
+                             "Purge yourself, {PLAYER}, in the heat of my flames!",
+                             "The ashes of past heroes cover my plains!",
+                             "Some die and are ashes, but I am ever reborn!"
                         ),
-                        Cooldown.Instance(500, PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4, 1))
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new DeathTransmute(0x6c2)
-                    }
-                ))
-            .Init(0x6c2, Behaves("Phoenix Egg",
-                    new QueuedBehavior(
-                        SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                        CooldownExact.Instance(1500),
-                        UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                        False.Instance(new RunBehaviors(
-                            Flashing.Instance(500, 0xffff0000),
-                            new QueuedBehavior(
-                                SetSize.Instance(140),
-                                CooldownExact.Instance(500),
-                                SetSize.Instance(130),
-                                CooldownExact.Instance(500)
-                            )
-                        ))
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new DeathTransmute(0x6c1)
-                    }
-                ))
-            .Init(0x6c1, Behaves("Phoenix Reborn",
-                    SmoothWandering.Instance(1f, 3f),
-                    new RunBehaviors(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x677, 1, 3, 5),
-                                SpawnMinionImmediate.Instance(0x676, 1, 1, 2)
-                            )
-                        ),
-                        new QueuedBehavior(
-                            If.Instance(
-                                EntityGroupLesserThan.Instance(10, 25, "Pyre"),
-                                Rand.Instance(
-                                    SpawnMinionImmediate.Instance(0x677, 1, 2, 4),
-                                    SpawnMinionImmediate.Instance(0x676, 1, 1, 2),
-                                    NullBehavior.Instance
-                                )
-                            ),
-                            Cooldown.Instance(2000)
-                        ),
-                        new QueuedBehavior(
-                            Cooldown.Instance(500, RingAttack.Instance(12, projectileIndex: 0)),
-                            Cooldown.Instance(500, RingAttack.Instance(12, projectileIndex: 0)),
-
-                            Cooldown.Instance(200, SimpleAttack.Instance(10, projectileIndex: 1)),
-                            Cooldown.Instance(200, SimpleAttack.Instance(10, projectileIndex: 1)),
-                            Cooldown.Instance(200, SimpleAttack.Instance(10, projectileIndex: 1)),
-                            Cooldown.Instance(200, SimpleAttack.Instance(10, projectileIndex: 1)),
-                            Cooldown.Instance(200, SimpleAttack.Instance(10, projectileIndex: 1)),
-
-                            Cooldown.Instance(500, PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4, 1, projectileIndex: 1)),
-                            Cooldown.Instance(500, PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4, 1, projectileIndex: 1)),
-                            Cooldown.Instance(500, PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4, 1, projectileIndex: 1)),
-                            Cooldown.Instance(500, PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4, 1, projectileIndex: 1))
-                        )
-                    ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(400, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.0001, (ILoot)IncLoot.Instance)
-                        ))
+                        new TransformOnDeath("Phoenix Egg")
                     )
-                ))
-            .Init(0x676, Behaves("Birdman Chief",
-                    IfNot.Instance(
-                        Chasing.Instance(5f, 17, 12, 0x678),
-                        Rand.Instance(
-                            Chasing.Instance(5f, 10, 2, null),
-                            SimpleWandering.Instance(5f)
+                )
+            .Init("Birdman Chief",
+                    new State(
+                        new Prioritize(
+                            new Protect(0.5, "Phoenix Lord", acquireRange: 15, protectionRange: 10, reprotectRange: 3),
+                            new Follow(1, range: 9),
+                            new Wander(0.5)
+                        ),
+                        new Shoot(10)
+                    ),
+                    new ItemLoot("Magic Potion", 0.05)
+                )
+            .Init("Birdman",
+                    new State(
+                        new Prioritize(
+                            new Protect(0.5, "Phoenix Lord", acquireRange: 15, protectionRange: 11, reprotectRange: 3),
+                            new Follow(1, range: 7),
+                            new Wander(0.5)
+                        ),
+                        new Shoot(10, predictive: 0.5)
+                    ),
+                    new ItemLoot("Health Potion", 0.05)
+                )
+            .Init("Phoenix Egg",
+                    new State(
+                        new State("shielded",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new TimedTransition(2000, "unshielded")
+                        ),
+                        new State("unshielded",
+                            new Flash(0xff0000, 1, 5000),
+                            new State("grow",
+                                new ChangeSize(20, 150),
+                                new TimedTransition(800, "shrink")
+                            ),
+                            new State("shrink",
+                                new ChangeSize(-20, 130),
+                                new TimedTransition(800, "grow")
+                            )
+                        ),
+                        new TransformOnDeath("Phoenix Reborn")
+                    )
+                )
+            .Init("Phoenix Reborn",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(0.9, 5),
+                            new Wander(0.9)
+                        ),
+                        new SpawnGroup("Pyre", maxChildren: 4, coolDown: 1000),
+                        new State("born_anew",
+                            new Shoot(10, projectileIndex: 0, count: 12, shootAngle: 30, fixedAngle: 10, coolDown: 100000, coolDownOffset: 500),
+                            new Shoot(10, projectileIndex: 0, count: 12, shootAngle: 30, fixedAngle: 25, coolDown: 100000, coolDownOffset: 1000),
+                            new TimedTransition(1800, "xxx")
+                        ),
+                        new State("xxx",
+                            new Shoot(10, projectileIndex: 1, count: 4, shootAngle: 7, predictive: 0.5, coolDown: 600),
+                            new TimedTransition(2800, "yyy")
+                        ),
+                        new State("yyy",
+                            new Shoot(10, projectileIndex: 0, count: 12, shootAngle: 30, fixedAngle: 10, coolDown: 100000, coolDownOffset: 500),
+                            new Shoot(10, projectileIndex: 0, count: 12, shootAngle: 30, fixedAngle: 25, coolDown: 100000, coolDownOffset: 1000),
+                            new Shoot(10, projectileIndex: 1, predictive: 0.5, coolDown: 350),
+                            new TimedTransition(4500, "xxx")
                         )
                     ),
-                    Cooldown.Instance(1000, PredictiveAttack.Instance(10, 0.5f))
-                ))
-            .Init(0x677, Behaves("Birdman",
-                    IfNot.Instance(
-                        Chasing.Instance(5f, 17, 12, 0x678),
-                        Rand.Instance(
-                            Chasing.Instance(5f, 10, 2, null),
-                            SimpleWandering.Instance(5f)
-                        )
-                    ),
-                    Cooldown.Instance(500, PredictiveAttack.Instance(10, 0.5f))
-                ));
+                    new ItemLoot("Wine Cellar Incantation", 0.002)
+                )
+                ;
     }
 }

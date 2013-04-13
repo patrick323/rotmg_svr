@@ -294,7 +294,7 @@ namespace wServer.logic
                     new State(
                         new State("protect",
                             new Protect(0.8, "Goblin Mage", acquireRange: 12, protectionRange: 1.5, reprotectRange: 1.5),
-                            new TimedTransition(1200, "scatter")
+                            new TimedTransition(1200, "scatter", randomized: true)
                         ),
                         new State("scatter",
                             new Orbit(0.8, 7, target: "Goblin Mage", radiusVariance: 1),
@@ -313,7 +313,7 @@ namespace wServer.logic
                     new State(
                         new State("protect",
                             new Protect(0.8, "Goblin Mage", acquireRange: 12, protectionRange: 1.5, reprotectRange: 1.5),
-                            new TimedTransition(1200, "scatter")
+                            new TimedTransition(1200, "scatter", randomized: true)
                         ),
                         new State("scatter",
                             new Orbit(0.8, 7, target: "Goblin Mage", radiusVariance: 1),
