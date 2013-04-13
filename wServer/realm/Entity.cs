@@ -211,7 +211,7 @@ namespace wServer.realm
                 if (CurrentState != null)
                 {
                     while (CurrentState.States.Count > 0)
-                        CurrentState = state.States[0];
+                        CurrentState = CurrentState.States[0];
                 }
             }
         }

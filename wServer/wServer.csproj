@@ -120,6 +120,9 @@
     <Compile Include="logic\behaviors\ChangeSize.cs" />
     <Compile Include="logic\behaviors\Charge.cs" />
     <Compile Include="logic\behaviors\ConditionalEffect.cs" />
+    <Compile Include="logic\behaviors\Timed.cs" />
+    <Compile Include="logic\behaviors\Suicide.cs" />
+    <Compile Include="logic\behaviors\Swirl.cs" />
     <Compile Include="logic\behaviors\StayCloseToSpawn.cs" />
     <Compile Include="logic\behaviors\Transform.cs" />
     <Compile Include="logic\behaviors\SpawnGroup.cs" />
@@ -151,6 +154,7 @@
     <Compile Include="logic\db\BehaviorDb.Lowland.cs" />
     <Compile Include="logic\db\BehaviorDb.Midland.cs" />
     <Compile Include="logic\db\BehaviorDb.Golems.cs" />
+    <Compile Include="logic\db\BehaviorDb.Mountain.cs" />
     <Compile Include="logic\db\BehaviorDb.Shore.cs" />
     <Compile Include="logic\db\BehaviorDb.Tutorial.cs" />
     <Compile Include="logic\CycleBehavior.cs" />
@@ -158,6 +162,7 @@
     <Compile Include="logic\loot\Loots.cs" />
     <Compile Include="logic\State.cs" />
     <Compile Include="logic\Transition.cs" />
+    <Compile Include="logic\transitions\NoPlayerWithinTransition.cs" />
     <Compile Include="logic\transitions\EntityNotExistsTransition.cs" />
     <Compile Include="logic\transitions\PlayerWithinTransition.cs" />
     <Compile Include="logic\transitions\HpLessTransition.cs" />

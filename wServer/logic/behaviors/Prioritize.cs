@@ -18,6 +18,7 @@ namespace wServer.logic.behaviors
 
         protected override void OnStateEntry(Entity host, RealmTime time, ref object state)
         {
+            state = -1;
             foreach (var i in children)
                 i.OnStateEntry(host, time);
         }

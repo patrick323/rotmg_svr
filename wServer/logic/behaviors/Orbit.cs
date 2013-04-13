@@ -10,7 +10,7 @@ namespace wServer.logic.behaviors
 {
     class Orbit : CycleBehavior
     {
-        //State storage: follow state
+        //State storage: orbit state
         class OrbitState
         {
             public float Speed;

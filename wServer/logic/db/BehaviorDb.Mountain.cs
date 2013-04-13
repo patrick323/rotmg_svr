@@ -3,363 +3,462 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
-        static LootDef CommonGodSoulBag =
-            new LootDef(0, 2, 0, 8,
-                Tuple.Create(0.020, (ILoot)new TierLoot(6, ItemType.Weapon)),
-                Tuple.Create(0.010, (ILoot)new TierLoot(7, ItemType.Weapon)),
-                Tuple.Create(0.005, (ILoot)new TierLoot(8, ItemType.Weapon)),
-
-                Tuple.Create(0.020, (ILoot)new TierLoot(6, ItemType.Armor)),
-                Tuple.Create(0.010, (ILoot)new TierLoot(7, ItemType.Armor)),
-                Tuple.Create(0.005, (ILoot)new TierLoot(8, ItemType.Armor)),
-                Tuple.Create(0.003, (ILoot)new TierLoot(9, ItemType.Armor)),
-
-                Tuple.Create(0.015, (ILoot)new TierLoot(3, ItemType.Ring)),
-                Tuple.Create(0.005, (ILoot)new TierLoot(4, ItemType.Ring)),
-                Tuple.Create(0.020, (ILoot)new TierLoot(4, ItemType.Ability))
-            );
-        const double PotProbability = 0.015;
-
         static _ Mountain = Behav()
-            .Init(0x651, Behaves("White Demon",
-                    IfNot.Instance(
-                        Chasing.Instance(6, 9, 4, null),
-                        SimpleWandering.Instance(4)
-                    ),
-                    Cooldown.Instance(1000, PredictiveMultiAttack.Instance(10, 15 * (float)Math.PI / 180, 3, 1)),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Att))
-                        ))
-                    )
-                ))
-            .Init(0x652, Behaves("Sprite God",
-                    SimpleWandering.Instance(2),
-                    new RunBehaviors(
-                        Cooldown.Instance(1000, PredictiveMultiAttack.Instance(12, 10 * (float)Math.PI / 180, 4, 1, 0)),
-                        Cooldown.Instance(1000, PredictiveAttack.Instance(10, 1, 1))
-                    ),
-                    IfNot.Instance(
-                        Once.Instance(
-                            SpawnMinionImmediate.Instance(0x653, 2, 3, 5)
+            .Init("White Demon",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
                         ),
-                        Reproduce.Instance(0x653, 5)
+                        new Shoot(10, count: 3, shootAngle: 20, predictive: 1, coolDown: 500),
+                        new Reproduce(densityMax: 3)
                     ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Att))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(8, ItemType.Weapon, 0.01),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(9, ItemType.Armor, 0.01),
+                    new TierLoot(3, ItemType.Ring, 0.015),
+                    new TierLoot(4, ItemType.Ring, 0.005),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Attack", 0.01)
                     )
-                ))
-            .Init(0x653, Behaves("Sprite Child",
-                    IfNot.Instance(
-                        Chasing.Instance(4, 5, 2, 0x652),
-                        SimpleWandering.Instance(4)
+                )
+            .Init("Sprite God",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, projectileIndex: 0, count: 4, shootAngle: 10),
+                        new Shoot(10, projectileIndex: 1, predictive: 1),
+                        new Reproduce(densityMax: 2),
+                        new Spawn("Sprite Child", maxChildren: 5)
+                    ),
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(8, ItemType.Weapon, 0.01),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(9, ItemType.Armor, 0.01),
+                    new TierLoot(4, ItemType.Ring, 0.02),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Attack", 0.015)
                     )
-                ))
-            .Init(0x654, Behaves("Medusa",
-                    IfNot.Instance(
-                        Chasing.Instance(6, 7, 4, null),
-                        SimpleWandering.Instance(4)
-                    ),
-                    new RunBehaviors(
-                        Cooldown.Instance(1000, MultiAttack.Instance(12, 10 * (float)Math.PI / 180, 5)),
-                        Cooldown.Instance(3000, ThrowAttack.Instance(4, 8, 150))
-                    ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Spd))
-                        ))
+                )
+            .Init("Sprite Child",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Protect(0.4, "Sprite God", protectionRange: 1),
+                            new Wander(0.4)
+                        )
                     )
-                ))
-            .Init(0x655, Behaves("Ent God",
-                    IfNot.Instance(
-                        Chasing.Instance(10, 7, 4, null),
-                        SimpleWandering.Instance(4)
+                )
+            .Init("Medusa",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, count: 5, shootAngle: 10, coolDown: 1000),
+                        new Grenade(4, 150, range: 8, coolDown: 3000),
+                        new Reproduce(densityMax: 3)
                     ),
-                    Cooldown.Instance(1250, PredictiveMultiAttack.Instance(12, 10 * (float)Math.PI / 180, 5, 1)),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Def))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(8, ItemType.Weapon, 0.01),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(9, ItemType.Armor, 0.01),
+                    new TierLoot(3, ItemType.Ring, 0.015),
+                    new TierLoot(4, ItemType.Ring, 0.005),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Speed", 0.01)
                     )
-                ))
-            .Init(0x656, Behaves("Beholder",
-                    IfNot.Instance(
-                        Chasing.Instance(4, 7, 4, null),
-                        SimpleWandering.Instance(4)
+                )
+            .Init("Ent God",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, count: 5, shootAngle: 10, predictive: 1, coolDown: 1250),
+                        new Reproduce(densityMax: 3)
                     ),
-                    new RunBehaviors(
-                        Cooldown.Instance(750, PredictiveRingAttack.Instance(5, .5f, 12, 0)),
-                        Cooldown.Instance(1000, PredictiveAttack.Instance(10, 1, 1))
-                    ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Def))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(8, ItemType.Weapon, 0.01),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(9, ItemType.Armor, 0.01),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Defense", 0.015)
                     )
-                ))
-            .Init(0x657, Behaves("Flying Brain",
-                    IfNot.Instance(
-                        Chasing.Instance(6, 7, 4, null),
-                        SimpleWandering.Instance(4)
+                )
+            .Init("Beholder",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, projectileIndex: 0, count: 5, shootAngle: 72, predictive: 0.5, coolDown: 750),
+                        new Shoot(10, projectileIndex: 1, predictive: 1),
+                        new Reproduce(densityMax: 3)
                     ),
-                    Cooldown.Instance(500, RingAttack.Instance(5, 12)),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Att))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(8, ItemType.Weapon, 0.01),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(9, ItemType.Armor, 0.01),
+                    new TierLoot(3, ItemType.Ring, 0.015),
+                    new TierLoot(4, ItemType.Ring, 0.005),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Defense", 0.01)
                     )
-                ))
-            .Init(0x658, Behaves("Slime God",
-                    IfNot.Instance(
-                        Chasing.Instance(10, 7, 4, null),
-                        SimpleWandering.Instance(4)
+                )
+            .Init("Flying Brain",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, count: 5, shootAngle: 72, coolDown: 500),
+                        new Reproduce(densityMax: 3)
                     ),
-                    new RunBehaviors(
-                        Cooldown.Instance(1000, MultiAttack.Instance(12, 10 * (float)Math.PI / 180, 5, 0)),
-                        Cooldown.Instance(650, PredictiveAttack.Instance(10, 1, 1))
-                    ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Def))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(3, ItemType.Ring, 0.015),
+                    new TierLoot(4, ItemType.Ring, 0.005),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Attack", 0.015)
                     )
-                ))
-            .Init(0x659, Behaves("Ghost God",
-                    IfNot.Instance(
-                        Chasing.Instance(4, 7, 4, null),
-                        SimpleWandering.Instance(4)
+                )
+            .Init("Slime God",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, projectileIndex: 0, count: 5, shootAngle: 10, predictive: 1, coolDown: 1000),
+                        new Shoot(10, projectileIndex: 1, predictive: 1, coolDown: 650),
+                        new Reproduce(densityMax: 2)
                     ),
-                    Cooldown.Instance(900, MultiAttack.Instance(12, 25 * (float)Math.PI / 180, 7)),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Spd))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(8, ItemType.Weapon, 0.01),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(9, ItemType.Armor, 0.01),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Defense", 0.015)
                     )
-                ))
+                )
+            .Init("Ghost God",
+                    new State(
+                        new Prioritize(
+                            new StayAbove(1, 200),
+                            new Follow(1, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(12, count: 7, shootAngle: 25, predictive: 0.5, coolDown: 900),
+                        new Reproduce(densityMax: 3)
+                    ),
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(3, ItemType.Ring, 0.015),
+                    new TierLoot(4, ItemType.Ring, 0.005),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Speed", 0.015)
+                    )
+                )
 
-            .Init(0x0905, Behaves("Rock Bot",
-                    Swirling.Instance(2, 5),
-                    new RunBehaviors(
-                        Cooldown.Instance(1000, SimpleAttack.Instance(15)),
-                        Cooldown.Instance(1000, Heal.Instance(5, 2500, 0x0907)),
-                        new RandomTaunt(0.0001, "We are impervious to non-mystic attacks.")
-                    ),
-                    Once.Instance(
-                        new RunBehaviors(
-                            SpawnMinionImmediate.Instance(0x0906, 2, 1, 1),
-                            SpawnMinionImmediate.Instance(0x0907, 2, 1, 1)
+            .Init("Rock Bot",
+                    new State(
+                        new Spawn("Paper Bot", maxChildren: 1, initialSpawn: 1, coolDown: 10000),
+                        new Spawn("Steel Bot", maxChildren: 1, initialSpawn: 1, coolDown: 10000),
+                        new Swirl(speed: 0.6, radius: 3, targeted: false),
+                        new State("Waiting",
+                            new PlayerWithinTransition(15, "Attacking")
+                        ),
+                        new State("Attacking",
+                            new Shoot(8, coolDown: 2000),
+                            new Heal(8, "Papers", coolDown: 1000),
+                            new Taunt("We are impervious to non-mystic attacks!", 0.5),
+                            new TimedTransition(10000, "Waiting")
                         )
                     ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.16, (ILoot)new TierLoot(5, ItemType.Weapon)),
-                            Tuple.Create(0.16, (ILoot)new TierLoot(4, ItemType.Armor)),
-                            Tuple.Create(0.08, (ILoot)new TierLoot(5, ItemType.Armor))
+                    new TierLoot(5, ItemType.Weapon, 0.16),
+                    new TierLoot(6, ItemType.Weapon, 0.08),
+                    new TierLoot(7, ItemType.Weapon, 0.04),
+                    new TierLoot(5, ItemType.Armor, 0.16),
+                    new TierLoot(6, ItemType.Armor, 0.08),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(3, ItemType.Ring, 0.05),
+                    new TierLoot(3, ItemType.Ability, 0.1),
+                    new ItemLoot("Purple Drake Egg", 0.01)
+                )
+            .Init("Paper Bot",
+                    new State(
+                        new Prioritize(
+                            new Orbit(0.4, 3, target: "Rock Bot"),
+                            new Wander(0.8)
                         ),
-                        Tuple.Create(1, new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.08, (ILoot)new TierLoot(6, ItemType.Weapon)),
-                            Tuple.Create(0.04, (ILoot)new TierLoot(7, ItemType.Weapon)),
-                            Tuple.Create(0.04, (ILoot)new TierLoot(6, ItemType.Armor)),
-                            Tuple.Create(0.05, (ILoot)new TierLoot(3, ItemType.Ring))
-                        )),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Purple Drake Egg")),
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Att))
-                        ))
-                    )
-                ))
-            .Init(0x0906, Behaves("Paper Bot",
-                    IfNot.Instance(
-                        Circling.Instance(4, 10, 5, 0x0905),
-                        SimpleWandering.Instance(8)
-                    ),
-                    new RunBehaviors(
-                        Cooldown.Instance(800, MultiAttack.Instance(15, 20 * (float)Math.PI / 180, 3)),
-                        Cooldown.Instance(1000, Heal.Instance(5, 2500, 0x0905)),
-                        HpLesser.Instance(400,
-                            new RunBehaviors(
-                                RingAttack.Instance(8),
-                                Despawn.Instance
-                            )
+                        new State("Idle",
+                            new PlayerWithinTransition(15, "Attack")
+                        ),
+                        new State("Attack",
+                            new Shoot(8, count: 3, shootAngle: 20, coolDown: 800),
+                            new Heal(8, "Steels", coolDown: 1000),
+                            new NoPlayerWithinTransition(30, "Idle"),
+                            new HpLessTransition(0.2, "Explode")
+                        ),
+                        new State("Explode",
+                            new Shoot(0, count: 10, shootAngle: 36, fixedAngle: 0),
+                            new Decay(0)
                         )
                     ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.04, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.01, (ILoot)MpPotionLoot.Instance)
+                    new TierLoot(6, ItemType.Weapon, 0.01),
+                    new ItemLoot("Health Potion", 0.04),
+                    new ItemLoot("Magic Potion", 0.01),
+                    new ItemLoot("Tincture of Life", 0.01)
+                )
+            .Init("Steel Bot",
+                    new State(
+                        new Prioritize(
+                            new Orbit(0.4, 3, target: "Rock Bot"),
+                            new Wander(0.8)
                         ),
-                        Tuple.Create(1, new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new TierLoot(6, ItemType.Weapon))
-                        )),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Tincture of Life")),
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Att))
-                        ))
-                    )
-                ))
-            .Init(0x0907, Behaves("Steel Bot",
-                    IfNot.Instance(
-                        Circling.Instance(4, 10, 5, 0x0905),
-                        SimpleWandering.Instance(8)
-                    ),
-                    new RunBehaviors(
-                        Cooldown.Instance(800, MultiAttack.Instance(15, 20 * (float)Math.PI / 180, 3)),
-                        Cooldown.Instance(1000, Heal.Instance(5, 2500, 0x0906)),
-                        new RandomTaunt(0.0001, "Silly squishy, we heal our brothers in a circle."),
-                        HpLesser.Instance(400,
-                            new RunBehaviors(
-                                RingAttack.Instance(8),
-                                Despawn.Instance
-                            )
+                        new State("Idle",
+                            new PlayerWithinTransition(15, "Attack")
+                        ),
+                        new State("Attack",
+                            new Shoot(8, count: 3, shootAngle: 20, coolDown: 800),
+                            new Heal(8, "Rocks", coolDown: 1000),
+                            new Taunt("Silly squishy. We heal our brothers in a circle.", 0.5),
+                            new NoPlayerWithinTransition(30, "Idle"),
+                            new HpLessTransition(0.2, "Explode")
+                        ),
+                        new State("Explode",
+                            new Shoot(0, count: 10, shootAngle: 36, fixedAngle: 0),
+                            new Decay(0)
                         )
                     ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.04, (ILoot)HpPotionLoot.Instance),
-                            Tuple.Create(0.01, (ILoot)MpPotionLoot.Instance)
-                        ),
-                        Tuple.Create(1, new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new TierLoot(6, ItemType.Weapon))
-                        )),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Att))
-                        ))
-                    )
-                ))
-            .Init(0x091a, Behaves("Djinn",
-                    HpGreaterEqual.Instance(400,
-                        new QueuedBehavior(
-                            SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                            Timed.Instance(2500, False.Instance(Chasing.Instance(6, 7, 0, null))),
-                            UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
+                    new TierLoot(6, ItemType.Weapon, 0.01),
+                    new ItemLoot("Health Potion", 0.04),
+                    new ItemLoot("Magic Potion", 0.01)
+                )
 
-                            If.Instance(IsEntityPresent.Instance(10, null),
-                                new QueuedBehavior(
-                                    Cooldown.Instance(200),
-                                    new RunBehaviors(
-                                        RingAttack.Instance(4, offset: 0 * (float)Math.PI / 180),
-                                        RingAttack.Instance(4, offset: 90 * (float)Math.PI / 180)
-                                    ),
-                                    Cooldown.Instance(200),
-                                    new RunBehaviors(
-                                        RingAttack.Instance(4, offset: 10 * (float)Math.PI / 180),
-                                        RingAttack.Instance(4, offset: 80 * (float)Math.PI / 180)
-                                    ),
-                                    Cooldown.Instance(200),
-                                    new RunBehaviors(
-                                        RingAttack.Instance(4, offset: 20 * (float)Math.PI / 180),
-                                        RingAttack.Instance(4, offset: 70 * (float)Math.PI / 180)
-                                    ),
-                                    Cooldown.Instance(200),
-                                    new RunBehaviors(
-                                        RingAttack.Instance(4, offset: 30 * (float)Math.PI / 180),
-                                        RingAttack.Instance(4, offset: 60 * (float)Math.PI / 180)
-                                    ),
-                                    Cooldown.Instance(200),
-                                    new RunBehaviors(
-                                        RingAttack.Instance(4, offset: 40 * (float)Math.PI / 180),
-                                        RingAttack.Instance(4, offset: 50 * (float)Math.PI / 180)
-                                    ),
-                                    Cooldown.Instance(250)
-                                )
-                            )
+            .Init("Djinn",
+                    new State(
+                        new State("Idle",
+                            new Prioritize(
+                                new StayAbove(1, 200),
+                                new Wander(0.8)
+                            ),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Reproduce(densityMax: 4),
+                            new PlayerWithinTransition(8, "Attacking")
+                        ),
+                        new State("Attacking",
+                            new State("Bullet",
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 90, coolDownOffset: 0, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 100, coolDownOffset: 200, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 110, coolDownOffset: 400, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 120, coolDownOffset: 600, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 130, coolDownOffset: 800, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 140, coolDownOffset: 1000, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 150, coolDownOffset: 1200, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 160, coolDownOffset: 1400, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 170, coolDownOffset: 1600, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 180, coolDownOffset: 1800, shootAngle: 90),
+                                new Shoot(1, count: 8, coolDown: 10000, fixedAngle: 180, coolDownOffset: 2000, shootAngle: 45),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 180, coolDownOffset: 0, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 170, coolDownOffset: 200, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 160, coolDownOffset: 400, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 150, coolDownOffset: 600, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 140, coolDownOffset: 800, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 130, coolDownOffset: 1000, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 120, coolDownOffset: 1200, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 110, coolDownOffset: 1400, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 100, coolDownOffset: 1600, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 90, coolDownOffset: 1800, shootAngle: 90),
+                                new Shoot(1, count: 4, coolDown: 10000, fixedAngle: 90, coolDownOffset: 2000, shootAngle: 22.5),
+                                new TimedTransition(2000, "Wait")
+                            ),
+                            new State("Wait",
+                                new Follow(0.7, range: 0.5),
+                                new Flash(0xff00ff00, 0.1, 20),
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new TimedTransition(2000, "Bullet")
+                            ),
+                            new NoPlayerWithinTransition(13, "Idle"),
+                            new HpLessTransition(0.5, "FlashBeforeExplode")
+                        ),
+                        new State("FlashBeforeExplode",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0xff0000, 0.3, 3),
+                            new TimedTransition(1000, "Explode")
+                        ),
+                        new State("Explode",
+                            new Shoot(0, count: 10, shootAngle: 36, fixedAngle: 0),
+                            new Suicide()
                         )
                     ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        HpLesserCond.Instance(400,
-                            new QueuedBehavior(
-                                SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(1000, Flashing.Instance(1500, 0xffff0000)),
-                                RingAttack.Instance(12),
-                                Die.Instance
-                            )
-                        )
-                    },
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Spd))
-                        ))
+                    new TierLoot(6, ItemType.Weapon, 0.04),
+                    new TierLoot(7, ItemType.Weapon, 0.02),
+                    new TierLoot(7, ItemType.Armor, 0.04),
+                    new TierLoot(8, ItemType.Armor, 0.02),
+                    new TierLoot(3, ItemType.Ring, 0.015),
+                    new TierLoot(4, ItemType.Ring, 0.005),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new Threshold(0.18,
+                        new ItemLoot("Potion of Speed", 0.015)
                     )
-                ))
-            .Init(0x6d8, Behaves("Leviathan",
-                    new QueuedBehavior(
-                        MagicEye.Instance,
-                        Timed.Instance(2000,
-                            Not.Instance(Chasing.Instance(8, 15, 5, null))
+                )
+
+            .Init("Leviathan",
+                    new State(
+                        new State("pattern walk",
+                            new StayAbove(2, 200),
+                            new Sequence(
+                                new Timed(2000,
+                                    new Prioritize(
+                                        new StayBack(1, distance: 8),
+                                        new BackAndForth(1)
+                                    )),
+                                new Timed(2000,
+                                    new Prioritize(
+                                        new Orbit(1, 8, acquireRange: 11),
+                                        new Swirl(1, radius: 4, targeted: false)
+                                    )),
+                                new Timed(1000,
+                                    new Prioritize(
+                                        new Follow(1, acquireRange: 11, range: 1),
+                                        new StayCloseToSpawn(1, 1)
+                                    )
+                                )
+                            ),
+                            new State("1",
+                                new Shoot(0, count: 3, shootAngle: 10, fixedAngle: 0, projectileIndex: 0, coolDown: 300),
+                                new Shoot(0, count: 3, shootAngle: 10, fixedAngle: 120, projectileIndex: 0, coolDown: 300),
+                                new Shoot(0, count: 3, shootAngle: 10, fixedAngle: 240, projectileIndex: 0, coolDown: 300),
+                                new TimedTransition(1500, "2")
+                            ),
+                            new State("2",
+                                new Shoot(0, count: 4, shootAngle: 10, fixedAngle: 40, projectileIndex: 0, coolDown: 300),
+                                new Shoot(0, count: 4, shootAngle: 10, fixedAngle: 160, projectileIndex: 0, coolDown: 300),
+                                new Shoot(0, count: 4, shootAngle: 10, fixedAngle: 280, projectileIndex: 0, coolDown: 300),
+                                new TimedTransition(1500, "3")
+                            ),
+                            new State("3",
+                                new Shoot(0, count: 4, shootAngle: 10, fixedAngle: 80, projectileIndex: 0, coolDown: 300),
+                                new Shoot(0, count: 4, shootAngle: 10, fixedAngle: 200, projectileIndex: 0, coolDown: 300),
+                                new Shoot(0, count: 4, shootAngle: 10, fixedAngle: 320, projectileIndex: 0, coolDown: 300),
+                                new TimedTransition(1500, "1")
+                            ),
+                            new TimedTransition(4400, "follow")
                         ),
-                        new RemoveKey(Circling.Instance(5, 15, 8, null)),
-                        Timed.Instance(2000,
-                            False.Instance(Circling.Instance(5, 15, 8, null))
-                        ),
-                        Timed.Instance(2000,
-                           Not.Instance(Tangential.Instance(8))
+                        new State("follow",
+                            new Prioritize(
+                                new StayAbove(1, 200),
+                                new Orbit(1, 4, acquireRange: 11),
+                                new Wander(1)
+                            ),
+                            new Shoot(11, count: 2, shootAngle: 15, defaultAngle: 0, angleOffset: 0, projectileIndex: 1, predictive: 1, coolDown: 900, coolDownOffset: 0),
+                            new Shoot(11, count: 2, shootAngle: 15, defaultAngle: 0, angleOffset: -10, projectileIndex: 1, predictive: 1, coolDown: 900, coolDownOffset: 300),
+                            new Shoot(11, count: 2, shootAngle: 15, defaultAngle: 0, angleOffset: 10, projectileIndex: 1, predictive: 1, coolDown: 900, coolDownOffset: 600),
+                            new TimedTransition(4500, "pattern walk")
                         )
                     ),
-                    new QueuedBehavior(
-                        Timed.Instance(1500,
-                            False.Instance(Cooldown.Instance(300,
-                                new RunBehaviors(
-                                    MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 0 * (float)Math.PI / 180, projectileIndex: 0),
-                                    MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 120 * (float)Math.PI / 180, projectileIndex: 0),
-                                    MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 240 * (float)Math.PI / 180, projectileIndex: 0)
-                                )
-                            ))
-                        ),
-                        Timed.Instance(1500,
-                            False.Instance(Cooldown.Instance(300,
-                                new RunBehaviors(
-                                    MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 60 * (float)Math.PI / 180, projectileIndex: 0),
-                                    MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 180 * (float)Math.PI / 180, projectileIndex: 0),
-                                    MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 300 * (float)Math.PI / 180, projectileIndex: 0)
-                                )
-                            ))
-                        ),
-                        Timed.Instance(1500,
-                            False.Instance(Cooldown.Instance(300,
-                                PredictiveMultiAttack.Instance(15, 15 * (float)Math.PI / 180, 2, 1, projectileIndex: 1)
-                            ))
-                        )
-                    ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, CommonGodSoulBag),
-                        Tuple.Create(360, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Def))
-                        ))
-                    )
-                ))
-            .Init(0x0d84, Behaves("Oryx Pet",   //Whoops!!
-                    SimpleWandering.Instance(1),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(1, new LootDef(100, 1, 8, 16,
-                            Tuple.Create(0.2, (ILoot)new TierLoot(14, ItemType.Weapon)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(15, ItemType.Armor)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(6, ItemType.Ability)),
-                            Tuple.Create(0.2, (ILoot)new TierLoot(5, ItemType.Ring)),
-                            Tuple.Create(0.2, (ILoot)new StatPotionsLoot(1, 2, 3))
-                        ))
-                    )
-                ));
+                    new TierLoot(6, ItemType.Weapon, 0.01),
+                    new ItemLoot("Health Potion", 0.04),
+                    new ItemLoot("Magic Potion", 0.01)
+                )
+                ;
+        //.Init(0x6d8, Behaves("Leviathan",
+        //        new QueuedBehavior(
+        //            MagicEye.Instance,
+        //            Timed.Instance(2000,
+        //                Not.Instance(Chasing.Instance(8, 15, 5, null))
+        //            ),
+        //            new RemoveKey(Circling.Instance(5, 15, 8, null)),
+        //            Timed.Instance(2000,
+        //                False.Instance(Circling.Instance(5, 15, 8, null))
+        //            ),
+        //            Timed.Instance(2000,
+        //               Not.Instance(Tangential.Instance(8))
+        //            )
+        //        ),
+        //        new QueuedBehavior(
+        //            Timed.Instance(1500,
+        //                False.Instance(Cooldown.Instance(300,
+        //                    new RunBehaviors(
+        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 0 * (float)Math.PI / 180, projectileIndex: 0),
+        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 120 * (float)Math.PI / 180, projectileIndex: 0),
+        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 3, 240 * (float)Math.PI / 180, projectileIndex: 0)
+        //                    )
+        //                ))
+        //            ),
+        //            Timed.Instance(1500,
+        //                False.Instance(Cooldown.Instance(300,
+        //                    new RunBehaviors(
+        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 60 * (float)Math.PI / 180, projectileIndex: 0),
+        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 180 * (float)Math.PI / 180, projectileIndex: 0),
+        //                        MultiAttack.Instance(15, 10 * (float)Math.PI / 180, 4, 300 * (float)Math.PI / 180, projectileIndex: 0)
+        //                    )
+        //                ))
+        //            ),
+        //            Timed.Instance(1500,
+        //                False.Instance(Cooldown.Instance(300,
+        //                    PredictiveMultiAttack.Instance(15, 15 * (float)Math.PI / 180, 2, 1, projectileIndex: 1)
+        //                ))
+        //            )   
+        //        ),
+        //        loot: new LootBehavior(LootDef.Empty,
+        //            Tuple.Create(1, CommonGodSoulBag),
+        //            Tuple.Create(360, new LootDef(0, 1, 0, 8,
+        //                Tuple.Create(PotProbability, (ILoot)new StatPotionLoot(StatPotion.Def))
+        //            ))
+        //        )
+        //    ))
+        //.Init(0x0d84, Behaves("Oryx Pet",   //Whoops!!
+        //        SimpleWandering.Instance(1),
+        //        loot: new LootBehavior(LootDef.Empty,
+        //            Tuple.Create(1, new LootDef(100, 1, 8, 16,
+        //                Tuple.Create(0.2, (ILoot)new TierLoot(14, ItemType.Weapon)),
+        //                Tuple.Create(0.2, (ILoot)new TierLoot(15, ItemType.Armor)),
+        //                Tuple.Create(0.2, (ILoot)new TierLoot(6, ItemType.Ability)),
+        //                Tuple.Create(0.2, (ILoot)new TierLoot(5, ItemType.Ring)),
+        //                Tuple.Create(0.2, (ILoot)new StatPotionsLoot(1, 2, 3))
+        //            ))
+        //        )
+        //    ));
     }
 }

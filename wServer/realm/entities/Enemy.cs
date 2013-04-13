@@ -50,6 +50,14 @@ namespace wServer.realm.entities
                 });
         }
 
+        public void Death(RealmTime time)
+        {
+            counter.Death(time);
+            if (CurrentState != null)
+                CurrentState.OnDeath(new BehaviorEventArgs(this, time));
+            Owner.LeaveWorld(this);
+        }
+
         public int Damage(Player from, RealmTime time, int dmg, bool noDef, params ConditionEffect[] effs)
         {
             if (stat) return 0;
@@ -82,10 +90,7 @@ namespace wServer.realm.entities
 
                 if (HP < 0 && Owner != null)
                 {
-                    counter.Death(time);
-                    if (CurrentState != null)
-                        CurrentState.OnDeath(new BehaviorEventArgs(this, time));
-                    Owner.LeaveWorld(this);
+                    Death(time);
                 }
 
                 UpdateCount++;
@@ -123,10 +128,7 @@ namespace wServer.realm.entities
 
                 if (HP < 0 && Owner != null)
                 {
-                    counter.Death(time);
-                    if (CurrentState != null)
-                        CurrentState.OnDeath(new BehaviorEventArgs(this, time));
-                    Owner.LeaveWorld(this);
+                    Death(time);
                 }
                 UpdateCount++;
                 return true;

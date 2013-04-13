@@ -30,7 +30,8 @@ namespace wServer.logic.behaviors
             else index = (int)state;
 
             children[index].Tick(host, time);
-            if (children[index].Status == CycleStatus.Completed)
+            if (children[index].Status == CycleStatus.Completed ||
+                children[index].Status == CycleStatus.NotStarted)
             {
                 index++;
                 if (index == children.Length) index = 0;

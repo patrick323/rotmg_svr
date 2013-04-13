@@ -190,7 +190,7 @@ namespace wServer.logic
                             ),
 
                             new State("shoot",
-                                new Shoot(8, projectileIndex: 1, coolDown: new Cooldown(150, 0)),
+                                new Shoot(8, projectileIndex: 1, coolDown: 150),
                                 new TimedTransition(700, "rest")
                             ),
                             new State("rest",
@@ -467,10 +467,10 @@ namespace wServer.logic
                             new PlayerWithinTransition(11, "scuttle")
                         ),
                         new State("scuttle",
-                            new Shoot(9, projectileIndex: 0, coolDown: new Cooldown(1000, 0)),
-                            new Shoot(9, projectileIndex: 1, coolDown: new Cooldown(1000, 0)),
-                            new Shoot(9, projectileIndex: 2, coolDown: new Cooldown(1000, 0)),
-                            new Shoot(9, projectileIndex: 3, coolDown: new Cooldown(1000, 0)),
+                            new Shoot(9, projectileIndex: 0, coolDown: 1000),
+                            new Shoot(9, projectileIndex: 1, coolDown: 1000),
+                            new Shoot(9, projectileIndex: 2, coolDown: 1000),
+                            new Shoot(9, projectileIndex: 3, coolDown: 1000),
                             new State("move",
                                 new Prioritize(
                                     new Follow(1, acquireRange: 10.6, range: 2),

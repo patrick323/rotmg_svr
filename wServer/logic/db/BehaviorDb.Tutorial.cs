@@ -14,22 +14,22 @@ namespace wServer.logic
         static _ Tutorial = Behav()
             .Init("West Tutorial Gun",
                     new State(
-                        new Shoot(32, fixedAngle: 180, coolDown: 2500)
+                        new Shoot(32, fixedAngle: 180, coolDown: new Cooldown(3000, 1000))
                     )
                 )
             .Init("North Tutorial Gun",
                     new State(
-                        new Shoot(32, fixedAngle: 270, coolDown: 2500)
+                        new Shoot(32, fixedAngle: 270, coolDown: new Cooldown(3000, 1000))
                     )
                 )
             .Init("East Tutorial Gun",
                     new State(
-                        new Shoot(32, fixedAngle: 0, coolDown: 2500)
+                        new Shoot(32, fixedAngle: 0, coolDown: new Cooldown(3000, 1000))
                     )
                 )
             .Init("South Tutorial Gun",
                     new State(
-                        new Shoot(32, fixedAngle: 90, coolDown: 2500)
+                        new Shoot(32, fixedAngle: 90, coolDown: new Cooldown(3000, 1000))
                     )
                 )
             .Init("Evil Chicken",

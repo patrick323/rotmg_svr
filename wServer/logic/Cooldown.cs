@@ -33,12 +33,13 @@ namespace wServer.logic
 
         public int Next(Random rand)
         {
+            if (Variance == 0) return CoolDown;
             return CoolDown + rand.Next(-Variance, Variance + 1);
         }
 
         public static implicit operator Cooldown(int cooldown)
         {
-            return new Cooldown(cooldown, (int)(cooldown * 0.25));
+            return new Cooldown(cooldown, 0);
         }
     }
 }

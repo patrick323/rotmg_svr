@@ -40,7 +40,9 @@ namespace wServer.logic.behaviors
             {
                 Entity entity = Entity.Resolve(children);
 
-                entity.Move(host.X, host.Y);
+                entity.Move(
+                    host.X + (float)(Random.NextDouble() * 0.5),
+                    host.Y + (float)(Random.NextDouble() * 0.5));
                 (entity as Enemy).Terrain = (host as Enemy).Terrain;
                 host.Owner.EnterWorld(entity);
             }
