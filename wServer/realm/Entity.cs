@@ -176,6 +176,14 @@ namespace wServer.realm
             {
                 if (localEntry != null && state == localEntry.Parent)
                     entry = false;
+                if (!transited)
+                    foreach (var i in state.Transitions)
+                        if (i.Tick(this, time))
+                        {
+                            transited = true;
+                            break;
+                        }
+
                 foreach (var i in state.Behaviors)
                 {
                     if (entry)
@@ -184,13 +192,7 @@ namespace wServer.realm
                     i.Tick(this, time);
                 }
                 if (Owner == null) break;
-                if (!transited)
-                    foreach (var i in state.Transitions)
-                        if (i.Tick(this, time))
-                        {
-                            transited = true;
-                            break;
-                        }
+
                 state = state.Parent;
             }
             if (!transited)
@@ -200,11 +202,12 @@ namespace wServer.realm
                 state = localState;
                 while (state != null)
                 {
-                    foreach (var i in state.Behaviors)
-                    {
-                        if (Owner == null) break;
-                        i.OnStateExit(this, time);
-                    }
+                    if (!CurrentState.Is(state))
+                        foreach (var i in state.Behaviors)
+                        {
+                            if (Owner == null) break;
+                            i.OnStateExit(this, time);
+                        }
                     if (Owner == null) break;
                     state = state.Parent;
                 }

@@ -20,7 +20,7 @@ namespace wServer.logic.behaviors
 
         public Taunt(params string[] text)
         {
-            this.probability = (float)probability;
+            this.text = text;
         }
 
         public Taunt(double probability, params string[] text)

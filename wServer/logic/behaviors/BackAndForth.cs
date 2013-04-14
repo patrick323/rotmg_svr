@@ -11,17 +11,17 @@ namespace wServer.logic.behaviors
         //State storage: remaining distance
 
         float speed;
-        public BackAndForth(double speed)
+        int distance;
+        public BackAndForth(double speed, int distance = 5)
         {
             this.speed = (float)speed;
+            this.distance = distance;
         }
-
-        const int DISTANCE = 5;
 
         protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
             float dist;
-            if (state == null) dist = DISTANCE;
+            if (state == null) dist = distance;
             else dist = (float)state;
 
             Status = CycleStatus.NotStarted;
@@ -37,7 +37,7 @@ namespace wServer.logic.behaviors
                 dist -= moveDist;
                 if (dist <= 0)
                 {
-                    dist = -DISTANCE;
+                    dist = -distance;
                     Status = CycleStatus.Completed;
                 }
             }
@@ -46,10 +46,10 @@ namespace wServer.logic.behaviors
                 Status = CycleStatus.InProgress;
                 host.ValidateAndMove(host.X - moveDist, host.Y);
                 host.UpdateCount++;
-                dist -= moveDist;
+                dist += moveDist;
                 if (dist >= 0)
                 {
-                    dist = DISTANCE;
+                    dist = distance;
                     Status = CycleStatus.Completed;
                 }
             }

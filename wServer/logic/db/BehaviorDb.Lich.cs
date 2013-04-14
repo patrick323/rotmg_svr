@@ -3,284 +3,329 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ Lich = Behav()
-            .Init(0x091b, Behaves("Lich",
-                    IfExist.Instance(-1,
-                        IfGreater.Instance(-1, 2,
-                            NullBehavior.Instance,
-                            SmoothWandering.Instance(1.5f, 3f)
+            .Init("Lich",
+                    new State(
+                        new State("Idle",
+                            new StayCloseToSpawn(0.5, range: 5),
+                            new Wander(0.5),
+                            new HpLessTransition(0.99999, "EvaluationStart1")
                         ),
-                        SmoothWandering.Instance(1.5f, 3f)
+                        new State("EvaluationStart1",
+                            new Taunt("New recruits for my undead army? How delightful!"),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Prioritize(
+                                new StayCloseToSpawn(0.35, range: 5),
+                                new Wander(0.35)
+                            ),
+                            new TimedTransition(2500, "EvaluationStart2")
+                        ),
+                        new State("EvaluationStart2",
+                            new Flash(0x0000ff, 0.1, 60),
+                            new Prioritize(
+                                new StayCloseToSpawn(0.35, range: 5),
+                                new Wander(0.35)
+                            ),
+
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120, coolDown: 100000, coolDownOffset: 200),
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120, coolDown: 100000, coolDownOffset: 400),
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120, coolDown: 100000, coolDownOffset: 2200),
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120, coolDown: 100000, coolDownOffset: 2400),
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120, coolDown: 100000, coolDownOffset: 4200),
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120, coolDown: 100000, coolDownOffset: 4400),
+
+                            new HpLessTransition(0.87, "EvaluationEnd"),
+                            new TimedTransition(6000, "EvaluationEnd")
+                        ),
+                        new State("EvaluationEnd",
+                            new Taunt("Time to meet your future brothers and sisters..."),
+                            new HpLessTransition(0.875, "HugeMob"),
+                            new HpLessTransition(0.952, "Mob"),
+                            new HpLessTransition(0.985, "SmallGroup"),
+                            new HpLessTransition(0.99999, "Solo")
+                        ),
+                        new State("HugeMob",
+                            new Taunt("...there's an ARMY of them! HahaHahaaaa!!!"),
+                            new Flash(0x00ff00, 0.2, 300),
+
+                            new Spawn("Haunted Spirit", maxChildren: 5, initialSpawn: 0, coolDown: 3000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 0, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 120, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 240, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 3, angle: 60, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 3, angle: 180, coolDown: 100000),
+
+                            new Prioritize(
+                                new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.9)
+                            ),
+
+                            new TimedTransition(25000, "HugeMob2")
+                        ),
+                        new State("HugeMob2",
+                            new Taunt("My minions have stolen your life force and fed it to me!"),
+                            new Flash(0x00ff00, 0.2, 300),
+
+                            new Spawn("Haunted Spirit", maxChildren: 5, initialSpawn: 0, coolDown: 3000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 0, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 120, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 240, coolDown: 100000),
+
+                            new Prioritize(
+                                new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.9)
+                            ),
+
+                            new TimedTransition(5000, "Wait")
+                        ),
+                        new State("Mob",
+                            new Taunt("...there's a lot of them! Hahaha!!"),
+                            new Flash(0x00ff00, 0.2, 300),
+
+                            new Spawn("Haunted Spirit", maxChildren: 2, initialSpawn: 0, coolDown: 2000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 0, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 120, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 240, coolDown: 100000),
+
+                            new Prioritize(
+                                new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.9)
+                            ),
+
+                            new TimedTransition(22000, "Mob2")
+                        ),
+                        new State("Mob2",
+                            new Taunt("My minions have stolen your life force and fed it to me!"),
+
+                            new Spawn("Haunted Spirit", maxChildren: 2, initialSpawn: 0, coolDown: 2000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 0, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 120, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 240, coolDown: 100000),
+
+                            new Prioritize(
+                                new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.9)
+                            ),
+
+                            new TimedTransition(5000, "Wait")
+                        ),
+                        new State("SmallGroup",
+                            new Taunt("...and there's more where they came from!"),
+                            new Flash(0x00ff00, 0.2, 300),
+
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 0, coolDown: 100000),
+                            new TossObject("Phylactery Bearer", range: 5.5, angle: 240, coolDown: 100000),
+
+                            new Prioritize(
+                                new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.9)
+                            ),
+
+                            new TimedTransition(15000, "SmallGroup2")
+                        ),
+                        new State("SmallGroup2",
+                            new Taunt("My minions have stolen your life force and fed it to me!"),
+
+                            new Spawn("Haunted Spirit", maxChildren: 1, initialSpawn: 1, coolDown: 9000),
+
+                            new Prioritize(
+                                new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                                new Wander(0.9)
+                            ),
+
+                            new TimedTransition(5000, "Wait")
+                        ),
+                        new State("Solo",
+                            new Taunt("...it's a small family, but you'll enjoy being part of it!"),
+                            new Flash(0x00ff00, 0.2, 10),
+                            new Wander(0.5),
+                            new TimedTransition(3000, "Wait")
+                        ),
+                        new State("Wait",
+                            new Taunt("Kneel before me! I am the master of life and death!"),
+                            new Transform("Actual Lich")
+                        )
+                    )
+                )
+            .Init("Actual Lich",
+                    new State(
+                        new Prioritize(
+                            new Protect(0.9, "Phylactery Bearer", acquireRange: 15, protectionRange: 2, reprotectRange: 2),
+                            new Wander(0.5)
+                        ),
+                        new Spawn("Mummy", maxChildren: 4, coolDown: 4000),
+                        new Spawn("Mummy King", maxChildren: 2, coolDown: 4000),
+                        new Spawn("Mummy Pharaoh", maxChildren: 1, coolDown: 4000),
+
+                        new State("typeA",
+                            new Shoot(10, projectileIndex: 0, count: 2, shootAngle: 7, coolDown: 800),
+                            new TimedTransition(8000, "typeB")
+                        ),
+                        new State("typeB",
+                            new Taunt(0.7, "All that I touch turns to dust!",
+                                           "You will drown in a sea of undead!"
+                            ),
+                            new Shoot(10, projectileIndex: 1, count: 4, shootAngle: 7, coolDown: 1000),
+                            new Shoot(10, projectileIndex: 0, count: 2, shootAngle: 7, coolDown: 800),
+                            new TimedTransition(6000, "typeA")
+                        )
                     ),
-                    new RunBehaviors(
-                        IfEqual.Instance(-1, 1,
-                            new QueuedBehavior(
-                                CooldownExact.Instance(2000),
-                                new SetKey(-1, 2)
-                            )
-                        ),
-                        IfEqual.Instance(-1, 2,
-                            new RunBehaviors(
-                                Once.Instance(UnsetConditionEffect.Instance(ConditionEffectIndex.Invincible)),
-                                Flashing.Instance(200, 0xff00ff00),
-                                new QueuedBehavior(
-                                    MultiAttack.Instance(10, 120 * (float)Math.PI / 180, 3, projectileIndex: 1),
-                                    CooldownExact.Instance(200),
-                                    MultiAttack.Instance(10, 120 * (float)Math.PI / 180, 3, projectileIndex: 1),
-                                    CooldownExact.Instance(1800)
+                    new TierLoot(2, ItemType.Ring, 0.11),
+                    new TierLoot(3, ItemType.Ring, 0.01),
+                    new TierLoot(5, ItemType.Weapon, 0.3),
+                    new TierLoot(6, ItemType.Weapon, 0.2),
+                    new TierLoot(7, ItemType.Weapon, 0.05),
+                    new TierLoot(5, ItemType.Armor, 0.3),
+                    new TierLoot(6, ItemType.Armor, 0.2),
+                    new TierLoot(7, ItemType.Armor, 0.05),
+                    new TierLoot(1, ItemType.Ability, 0.9),
+                    new TierLoot(2, ItemType.Ability, 0.15),
+                    new TierLoot(3, ItemType.Ability, 0.02),
+                    new ItemLoot("Health Potion", 0.4),
+                    new ItemLoot("Magic Potion", 0.4)
+                )
+            .Init("Phylactery Bearer",
+                    new State(
+                        new Heal(15, "Heros", coolDown: 200),
+                        new State("Attack1",
+                            new Shoot(10, projectileIndex: 0, count: 3, shootAngle: 120, coolDown: 900, coolDownOffset: 400),
+                            new State("AttackX",
+                                new Prioritize(
+                                    new StayCloseToSpawn(0.55, range: 5),
+                                    new Orbit(0.55, 4, acquireRange: 5)
                                 ),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(6000),
-                                    new SetKey(-1, 3)
-                                )
+                                new TimedTransition(1500, "AttackY")
+                            ),
+                            new State("AttackY",
+                                new Taunt(0.05, "We feed the master!"),
+                                new Prioritize(
+                                    new StayCloseToSpawn(0.55, range: 5),
+                                    new StayBack(0.55, distance: 2),
+                                    new Wander(0.55)
+                                ),
+                                new TimedTransition(1500, "AttackX")
+                            ),
+                            new HpLessTransition(0.65, "Attack2")
+                        ),
+                        new State("Attack2",
+                            new Shoot(10, projectileIndex: 0, count: 3, shootAngle: 15, predictive: 0.1, coolDown: 600, coolDownOffset: 200),
+                            new State("AttackX",
+                                new Prioritize(
+                                    new StayCloseToSpawn(0.65, range: 5),
+                                    new Orbit(0.65, 4, acquireRange: 10)
+                                ),
+                                new TimedTransition(1500, "AttackY")
+                            ),
+                            new State("AttackY",
+                                new Taunt(0.05, "We feed the master!"),
+                                new Prioritize(
+                                    new StayCloseToSpawn(0.65, range: 5),
+                                    new Buzz(),
+                                    new Wander(0.65)
+                                ),
+                                new TimedTransition(1500, "AttackX")
+                            ),
+                            new HpLessTransition(0.3, "Attack3")
+                        ),
+                        new State("Attack3",
+                            new Shoot(10, projectileIndex: 1, coolDown: 800),
+                            new State("AttackX",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Prioritize(
+                                    new StayCloseToSpawn(1.3, range: 5),
+                                    new Wander(1.3)
+                                ),
+                                new TimedTransition(2500, "AttackY")
+                            ),
+                            new State("AttackY",
+                                new Taunt(0.02, "We feed the master!"),
+                                new Prioritize(
+                                    new StayCloseToSpawn(1, range: 5),
+                                    new Wander(1)
+                                ),
+                                new TimedTransition(2500, "AttackX")
                             )
                         ),
-                        IfEqual.Instance(-1, 3,
-                            new RunBehaviors(
-                                new SetKey(-1, 4),
-                                Once.Instance(new RunBehaviors(
-                                    new SimpleTaunt("Time to meet your future brothers and sisters..."),
-                                    DamageLesserEqual.Instance(4500,
-                                        new RunBehaviors(
-                                            new SimpleTaunt("...It's a small family, but you'll enjoy being part of it!"),
-                                            new SetKey(-2, 0)
-                                        ),
-                                        DamageLesserEqual.Instance(14400,
-                                            new RunBehaviors(
-                                                new SimpleTaunt("...and there's more where they came from!"),
-                                                new SetKey(-2, 1)
-                                            ),
-                                            DamageLesserEqual.Instance(37500,
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("...there's a lot of them! Hahaha!!"),
-                                                    new SetKey(-2, 2)
-                                                ),
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("... there's an ARMY of them! HahaHahaaaa!!!"),
-                                                    new SetKey(-2, 3)
-                                                )
-                                            )
-                                        )
-                                    )
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-2, 0,
-                            new QueuedBehavior(
-                                CooldownExact.Instance(3000),
-                                new Transmute(0x091c)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 1,
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x091d),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x091d),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x091d),
-                                TossEnemy.Instance(0, 5, 0x091e),
-                                CooldownExact.Instance(6000),
-                                new Transmute(0x091c)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 2,
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 4, 0x091d),
-                                TossEnemy.Instance(72 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(144 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(216 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(288 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(0, 4, 0x091e),
-                                TossEnemy.Instance(144 * (float)Math.PI / 180, 4, 0x091e),
-                                TossEnemy.Instance(288 * (float)Math.PI / 180, 4, 0x091e),
-                                CooldownExact.Instance(6000),
-                                new Transmute(0x091c)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 3,
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 4, 0x091d),
-                                TossEnemy.Instance(72 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(144 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(216 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(288 * (float)Math.PI / 180, 4, 0x091d),
-                                TossEnemy.Instance(0, 4, 0x091e),
-                                TossEnemy.Instance(144 * (float)Math.PI / 180, 4, 0x091e),
-                                TossEnemy.Instance(288 * (float)Math.PI / 180, 4, 0x091e),
-                                CooldownExact.Instance(5000),
-                                EntityLesserThan.Instance(10, 4, 0x91d),
-                                CooldownExact.Instance(3000),
-                                new SimpleTaunt("My minions have stolen your life force and fed it to me!!"),
-                                new SetKey(-2, 4)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 4,
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x091d),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x091d),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x091d),
-                                CooldownExact.Instance(6000),
-                                new Transmute(0x091c)
-                            )
-                        )
+                        new Decay(130000)
                     ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new OnHit(
-                            Once.Instance(
-                                new RunBehaviors(
-                                    new SimpleTaunt("New recruits for my undead army? How delightful!"),
-                                    new SetKey(-1, 1),
-                                    SetConditionEffect.Instance(ConditionEffectIndex.Invincible)
-                                )
-                            )
-                        )
-                    }
-                ))
-            .Init(0x091c, Behaves("Actual Lich",
-                    SmoothWandering.Instance(1.5f, 3f),
-                    Cooldown.Instance(500, Rand.Instance(
-                         MultiAttack.Instance(10, 15 * (float)Math.PI / 180, 2, projectileIndex: 0),
-                         MultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4, projectileIndex: 1)
-                    )),
-                    new QueuedBehavior(
-                        True.Instance(Once.Instance(new SimpleTaunt("Kneel before me! I am the master of life and death!"))),
-                        SpawnMinionImmediate.Instance(0x660, 1, 1, 1),
-                        SpawnMinionImmediate.Instance(0x661, 1, 1, 2),
-                        SpawnMinionImmediate.Instance(0x65f, 1, 2, 3),
-                        CooldownExact.Instance(5000),
-                        Rand.Instance(
-                            new RandomTaunt(0.1, "All that I touch turns to dust!"),
-                            new RandomTaunt(0.1, "You will drown in a sea of undead!")
-                        )
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 4, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.01, (ILoot)new TierLoot(2, ItemType.Ability)),
-                            Tuple.Create(0.01, (ILoot)new TierLoot(5, ItemType.Weapon)),
-                            Tuple.Create(0.01, (ILoot)new TierLoot(5, ItemType.Armor)),
-                            Tuple.Create(0.5, (ILoot)PotionLoot.Instance)
+                    new ItemLoot("Tincture of Defense", 0.02),
+                    new ItemLoot("Orange Drake Egg", 0.06),
+                    new ItemLoot("Magic Potion", 0.03)
+                )
+            .Init("Haunted Spirit",
+                    new State(
+                        new State("NewLocation",
+                            new Taunt(0.1, "XxxXxxxXxXxXxxx..."),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Shoot(10, predictive: 0.2, coolDown: 700),
+                            new Prioritize(
+                                new StayCloseToSpawn(1, range: 11),
+                                new Wander(1)
+                            ),
+                            new TimedTransition(7000, "Attack")
                         ),
-                        Tuple.Create(100, new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.10, (ILoot)new TierLoot(6, ItemType.Weapon)),
-                            Tuple.Create(0.06, (ILoot)new TierLoot(7, ItemType.Weapon)),
-
-                            Tuple.Create(0.10, (ILoot)new TierLoot(6, ItemType.Armor)),
-                            Tuple.Create(0.06, (ILoot)new TierLoot(7, ItemType.Armor)),
-
-                            Tuple.Create(0.20, (ILoot)new TierLoot(2, ItemType.Ring)),
-                            Tuple.Create(0.10, (ILoot)new TierLoot(3, ItemType.Ring)),
-                            Tuple.Create(0.01, (ILoot)new TierLoot(3, ItemType.Ability))
-                        ))
-                    )
-                ))
-            .Init(0x091d, Behaves("Phylactery Bearer",
-                    HpLesser.Instance(500,
-                        SimpleWandering.Instance(10f),
-                        IfNot.Instance(
-                            ChasingGroup.Instance(2, 20, 8, "Heros"),
-                            SimpleWandering.Instance(6f)
-                        )
-                    ),
-                    new RunBehaviors(
-                        HpLesser.Instance(500,
-                            new RunBehaviors(
-                                Once.Instance(SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(3000),
-                                    Die.Instance
-                                )
-                            )
+                        new State("Attack",
+                            new Taunt(0.1, "Hungry..."),
+                            new Shoot(10, predictive: 0.3, coolDown: 700),
+                            new Shoot(10, count: 2, shootAngle: 70, coolDown: 700, coolDownOffset: 200),
+                            new TimedTransition(3000, "NewLocation")
                         ),
-                        Cooldown.Instance(250, HealGroup.Instance(15, 500, "Heros")),
-                        Cooldown.Instance(1000, new RandomTaunt(0.01, "We feed the master!")),
-                        Cooldown.Instance(500,
-                            Rand.Instance(
-                                MultiAttack.Instance(10, 120 * (float)Math.PI / 180, 3, projectileIndex: 0),
-                                MultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3, projectileIndex: 0),
-                                PredictiveAttack.Instance(10, 1, projectileIndex: 1)
-                            )
-                        )
+                        new Decay(90000)
                     ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(100, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Orange Drake Egg"))
-                        ))
-                    )
-                ))
-            .Init(0x091e, Behaves("Haunted Spirit",
-                    IfExist.Instance(-1,
-                        SimpleWandering.Instance(10f),
-                        NullBehavior.Instance
+                    new TierLoot(8, ItemType.Weapon, 0.02),
+                    new ItemLoot("Magic Potion", 0.02),
+                    new ItemLoot("Ring of Magic", 0.02),
+                    new ItemLoot("Ring of Attack", 0.02),
+                    new ItemLoot("Tincture of Dexterity", 0.06),
+                    new ItemLoot("Tincture of Mana", 0.09),
+                    new ItemLoot("Tincture of Life", 0.04)
+                )
+            .Init("Mummy",
+                    new State(
+                        new Prioritize(
+                            new Protect(1, "Lich", protectionRange: 10),
+                            new Follow(1.2, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(10)
                     ),
-                    new RunBehaviors(
-                        new QueuedBehavior(
-                            new SetKey(-1, 1),
-                            SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                            Cooldown.Instance(2500),
-                            new RemoveKey(-1),
-                            UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                            Cooldown.Instance(1500)
+                    new ItemLoot("Magic Potion", 0.02),
+                    new ItemLoot("Spirit Salve Tome", 0.02)
+                )
+            .Init("Mummy King",
+                    new State(
+                        new Prioritize(
+                            new Protect(1, "Lich", protectionRange: 10),
+                            new Follow(1.2, range: 7),
+                            new Wander(0.4)
                         ),
-                        Cooldown.Instance(1000,
-                            Rand.Instance(
-                                new RandomTaunt(0.01, "Hungry..."),
-                                new RandomTaunt(0.01, "XxxXxxxXxXxXxxx...")
-                            )
-                        ),
-                        new QueuedBehavior(
-                            SimpleAttack.Instance(10),
-                            CooldownExact.Instance(200),
-                            MultiAttack.Instance(10, 40 * (float)Math.PI / 180, 3),
-                            CooldownExact.Instance(200),
-                            SimpleAttack.Instance(10),
-                            CooldownExact.Instance(200),
-                            MultiAttack.Instance(10, 40 * (float)Math.PI / 180, 3),
-                            CooldownExact.Instance(200),
-                            SimpleAttack.Instance(10),
-                            CooldownExact.Instance(200),
-                            MultiAttack.Instance(10, 40 * (float)Math.PI / 180, 3),
-                            CooldownExact.Instance(200),
-                            SimpleAttack.Instance(10),
-                            CooldownExact.Instance(200),
-                            MultiAttack.Instance(10, 40 * (float)Math.PI / 180, 3),
-                            CooldownExact.Instance(2000)
-                        ),
-                        new QueuedBehavior(
-                            new SetKey(-1, 1),
-                            Cooldown.Instance(5000),
-                            new RemoveKey(-1),
-                            Cooldown.Instance(1000)
-                        )
+                        new Shoot(10)
                     ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(100, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Tincture of Defense")),
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Tincture of Life")),
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Tincture of Mana"))
-                        ))
-                    )
-                ))
-            .Init(0x65f, Behaves("Mummy",
-                    SimpleWandering.Instance(6f),
-                    Cooldown.Instance(500, SimpleAttack.Instance(10))
-                ))
-            .Init(0x660, Behaves("Mummy King",
-                    SimpleWandering.Instance(6f),
-                    Cooldown.Instance(500, SimpleAttack.Instance(10))
-                ))
-            .Init(0x661, Behaves("Mummy Pharaoh",
-                    SimpleWandering.Instance(6f),
-                    Cooldown.Instance(500, SimpleAttack.Instance(10))
-                ));
+                    new ItemLoot("Magic Potion", 0.02),
+                    new ItemLoot("Spirit Salve Tome", 0.02)
+                )
+            .Init("Mummy Pharaoh",
+                    new State(
+                        new Prioritize(
+                            new Protect(1, "Lich", protectionRange: 10),
+                            new Follow(1.2, range: 7),
+                            new Wander(0.4)
+                        ),
+                        new Shoot(10)
+                    ),
+                    new ItemLoot("Hell's Fire Wand", 0.02),
+                    new ItemLoot("Slayer Staff", 0.02),
+                    new ItemLoot("Golden Sword", 0.02),
+                    new ItemLoot("Golden Dagger", 0.02)
+                )
+                ;
     }
 }

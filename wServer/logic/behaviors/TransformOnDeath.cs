@@ -24,7 +24,8 @@ namespace wServer.logic.behaviors
         {
             parent.Death += (sender, e) =>
             {
-                if (Random.NextDouble() < probability)
+                if (e.Host.CurrentState.Is(parent) &&
+                    Random.NextDouble() < probability)
                 {
                     int count = Random.Next(min, max + 1);
                     for (int i = 0; i < count; i++)

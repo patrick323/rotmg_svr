@@ -152,8 +152,11 @@
     <Compile Include="logic\DamageCounter.cs" />
     <Compile Include="logic\db\BehaviorDb.Cyclops.cs" />
     <Compile Include="logic\db\BehaviorDb.Deathmage.cs" />
+    <Compile Include="logic\db\BehaviorDb.EntAncient.cs" />
     <Compile Include="logic\db\BehaviorDb.ForbiddenJungle.cs" />
+    <Compile Include="logic\db\BehaviorDb.GhostKing.cs" />
     <Compile Include="logic\db\BehaviorDb.Highland.cs" />
+    <Compile Include="logic\db\BehaviorDb.Lich.cs" />
     <Compile Include="logic\db\BehaviorDb.Lowland.cs" />
     <Compile Include="logic\db\BehaviorDb.Midland.cs" />
     <Compile Include="logic\db\BehaviorDb.Golems.cs" />

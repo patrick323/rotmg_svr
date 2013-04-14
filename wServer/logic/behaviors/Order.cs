@@ -11,17 +11,17 @@ namespace wServer.logic.behaviors
     class Order : Behavior
     {
         //State storage: none
-        //Note the target state must be defined before this is used
 
         double range;
         short children;
+        string targetStateName;
         State targetState;
 
         public Order(double range, string children, string targetState)
         {
             this.range = range;
             this.children = XmlDatas.IdToType[children];
-            this.targetState = FindState(BehaviorDb.Definitions[this.children].Item1, targetState);
+            this.targetStateName = targetState;
         }
 
         static State FindState(State state, string name)
@@ -36,17 +36,13 @@ namespace wServer.logic.behaviors
             return null;
         }
 
-        bool Contains(State self, State target)
-        {
-            if (self == target) return true;
-            else if (self.Parent != null) return Contains(self.Parent, target);
-            else return false;
-        }
 
         protected override void TickCore(Entity host, RealmTime time, ref object state)
         {
+            if (targetState == null)
+                this.targetState = FindState(BehaviorDb.Definitions[this.children].Item1, targetStateName);
             foreach (var i in host.GetNearestEntities(range, children))
-                if (!Contains(i.CurrentState, targetState))
+                if (!i.CurrentState.Is(targetState))
                     i.SwitchTo(targetState);
         }
     }

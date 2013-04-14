@@ -39,6 +39,13 @@ namespace wServer.logic
         public IList<Behavior> Behaviors { get; private set; }
         public IList<Transition> Transitions { get; private set; }
 
+        public bool Is(State state)
+        {
+            if (this == state) return true;
+            else if (this.Parent != null) return this.Parent.Is(state);
+            else return false;
+        }
+
         public event EventHandler<BehaviorEventArgs> Death;
 
         internal void OnDeath(BehaviorEventArgs e)
