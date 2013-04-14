@@ -148,12 +148,12 @@ namespace wServer.realm
                 obj.CollisionNode.Remove();
         }
 
-        public IEnumerable<T> HitTest(Position pos, float radius)
+        public IEnumerable<T> HitTest(Position pos, double radius)
         {
             return HitTest(pos.X, pos.Y, radius);
         }
 
-        public IEnumerable<T> HitTest(double _x, double _y, float radius)
+        public IEnumerable<T> HitTest(double _x, double _y, double radius)
         {
             int xl = Math.Max(0, (int)(_x - radius) / CHUNK_SIZE);
             int xh = Math.Min(cW - 1, (int)(_x + radius) / CHUNK_SIZE);

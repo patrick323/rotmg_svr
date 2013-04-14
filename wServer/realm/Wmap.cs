@@ -135,6 +135,7 @@ namespace wServer.realm
             {
                 if (ver == 0) return LoadV0(rdr, idBase);
                 else if (ver == 1) return LoadV1(rdr, idBase);
+                else if (ver == 2) return LoadV2(rdr, idBase);
                 else throw new NotSupportedException("WMap version " + ver);
             }
         }
@@ -213,6 +214,55 @@ namespace wServer.realm
                 {
                     WmapTile tile = dict[reader.ReadInt16()];
                     tile.UpdateCount = 1;
+
+                    ObjectDesc desc;
+                    if (tile.ObjType != 0 &&
+                        (!XmlDatas.ObjectDescs.TryGetValue(tile.ObjType, out desc) ||
+                        !desc.Static || desc.Enemy))
+                    {
+                        entities.Add(new Tuple<IntPoint, short, string>(new IntPoint(x, y), tile.ObjType, tile.Name));
+                        tile.ObjType = 0;
+                    }
+
+                    if (tile.ObjType != 0)
+                    {
+                        enCount++;
+                        tile.ObjId = idBase + enCount;
+                    }
+
+
+                    tiles[x, y] = tile;
+                }
+            this.entities = entities.ToArray();
+            return enCount;
+        }
+
+        int LoadV2(BinaryReader reader, int idBase)
+        {
+            List<WmapTile> dict = new List<WmapTile>();
+            short c = reader.ReadInt16();
+            for (short i = 0; i < c; i++)
+            {
+                WmapTile tile = new WmapTile();
+                tile.TileId = (byte)reader.ReadInt16();
+                string obj = reader.ReadString();
+                tile.ObjType = string.IsNullOrEmpty(obj) ? (short)0 : XmlDatas.IdToType[obj];
+                tile.Name = reader.ReadString();
+                tile.Terrain = (WmapTerrain)reader.ReadByte();
+                tile.Region = (TileRegion)reader.ReadByte();
+                dict.Add(tile);
+            }
+            Width = reader.ReadInt32();
+            Height = reader.ReadInt32();
+            tiles = new WmapTile[Width, Height];
+            int enCount = 0;
+            List<Tuple<IntPoint, short, string>> entities = new List<Tuple<IntPoint, short, string>>();
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                {
+                    WmapTile tile = dict[reader.ReadInt16()];
+                    tile.UpdateCount = 1;
+                    tile.Elevation = reader.ReadByte();
 
                     ObjectDesc desc;
                     if (tile.ObjType != 0 &&

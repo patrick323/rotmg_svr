@@ -40,8 +40,8 @@ namespace wServer.realm.entities
             {
                 if (i is Container)
                 {
-                    int? owner = (i as Container).BagOwner;
-                    if (owner != null && owner != AccountId) continue;
+                    int[] owners = (i as Container).BagOwners;
+                    if (owners.Length > 0 && Array.IndexOf(owners, AccountId) == -1) continue;
                 }
                 if (DistanceSquared(i.X, i.Y, X, Y) <= RADIUS * RADIUS)
                 {

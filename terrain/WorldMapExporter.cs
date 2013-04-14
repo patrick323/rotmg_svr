@@ -19,7 +19,7 @@ namespace terrain
 
             int w = tiles.GetLength(0);
             int h = tiles.GetLength(1);
-            byte[] dat = new byte[w * h * 2];
+            byte[] dat = new byte[w * h * 3];
             int idx = 0;
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
@@ -33,7 +33,8 @@ namespace terrain
                     }
                     dat[idx] = (byte)(i & 0xff);
                     dat[idx + 1] = (byte)(i >> 8);
-                    idx += 2;
+                    dat[idx + 2] = (byte)(tile.Elevation * 255);
+                    idx += 3;
                 }
 
             MemoryStream ms = new MemoryStream();
@@ -47,7 +48,6 @@ namespace terrain
                     wtr.Write(i.Name ?? "");
                     wtr.Write((byte)i.Terrain);
                     wtr.Write((byte)i.Region);
-                    wtr.Write((byte)(i.Elevation * 256));
                 }
                 wtr.Write(w);
                 wtr.Write(h);
@@ -56,7 +56,7 @@ namespace terrain
             byte[] buff = ZlibStream.CompressBuffer(ms.ToArray());
             byte[] ret = new byte[buff.Length + 1];
             Buffer.BlockCopy(buff, 0, ret, 1, buff.Length);
-            ret[0] = 1;
+            ret[0] = 2;
             return ret;
         }
     }

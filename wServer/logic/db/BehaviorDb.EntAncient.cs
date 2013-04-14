@@ -3,354 +3,284 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ EntAncient = Behav()
-            .Init(0x091f, Behaves("Ent Ancient",
-                    IfExist.Instance(-1,
-                        IfGreater.Instance(-1, 1,
-                            IfEqual.Instance(-1, 3,
-                                NullBehavior.Instance,
-                                SmoothWandering.Instance(1.5f, 3f)
+            .Init("Ent Ancient",
+                    new State(
+                        new State("Idle",
+                            new StayCloseToSpawn(0.1, range: 6),
+                            new Wander(0.1),
+                            new HpLessTransition(0.99999, "EvaluationStart1")
+                        ),
+                        new State("EvaluationStart1",
+                            new Taunt("Uhh. So... sleepy..."),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Prioritize(
+                                new StayCloseToSpawn(0.2, range: 3),
+                                new Wander(0.2)
                             ),
-                            SmoothWandering.Instance(1.5f, 2f)
+                            new TimedTransition(2500, "EvaluationStart2")
                         ),
-                        SmoothWandering.Instance(1.5f, 2f)
-                    ),
-                    new RunBehaviors(
-                        IfEqual.Instance(-1, 1,
-                            new QueuedBehavior(
-                                CooldownExact.Instance(2000),
-                                new SetKey(-1, 2)
-                            )
+                        new State("EvaluationStart2",
+                            new Flash(0x0000ff, 0.1, 60),
+                            new Shoot(10, count: 2, shootAngle: 180, coolDown: 800),
+                            new Prioritize(
+                                new StayCloseToSpawn(0.3, range: 5),
+                                new Wander(0.3)
+                            ),
+                            new HpLessTransition(0.87, "EvaluationEnd"),
+                            new TimedTransition(6000, "EvaluationEnd")
                         ),
-                        IfEqual.Instance(-1, 2,
-                            new RunBehaviors(
-                                Once.Instance(UnsetConditionEffect.Instance(ConditionEffectIndex.Invincible)),
-                                Flashing.Instance(500, 0xff0000ff),
-                                Cooldown.Instance(500, MultiAttack.Instance(10, (float)Math.PI, 2, 0 * (float)Math.PI / 180)),
-                                Cooldown.Instance(750, MultiAttack.Instance(10, (float)Math.PI, 2, 90 * (float)Math.PI / 180)),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(6000),
-                                    new SetKey(-1, 3)
-                                )
-                            )
+                        new State("EvaluationEnd",
+                            new HpLessTransition(0.875, "HugeMob"),
+                            new HpLessTransition(0.952, "Mob"),
+                            new HpLessTransition(0.985, "SmallGroup"),
+                            new HpLessTransition(0.99999, "Solo")
                         ),
-                        IfEqual.Instance(-1, 3,
-                            new RunBehaviors(
-                                SetConditionEffect.Instance(ConditionEffectIndex.Invincible),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(3000),
-                                    new Transmute(0x0920)
-                                ),
-                                Once.Instance(new RunBehaviors(
-                                    DamageLesserEqual.Instance(4500,
-                                        new RunBehaviors(
-                                            new SimpleTaunt("Mmm? Did you say something, mortal?"),
-                                            new SetKey(-2, 0)
-                                        ),
-                                        DamageLesserEqual.Instance(14400,
-                                            new RunBehaviors(
-                                                new SimpleTaunt("It will be trivial to dispose of you."),
-                                                SpawnMinionImmediate.Instance(0x0923, 3, 1, 1),
-                                                SpawnMinionImmediate.Instance(0x0921, 3, 2, 2),
-                                                new SetKey(-2, 0)
-                                            ),
-                                            DamageLesserEqual.Instance(37500,
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("Little flies, little flies... we will swat you."),
-                                                    SpawnMinionImmediate.Instance(0x0923, 3, 3, 3),
-                                                    SpawnMinionImmediate.Instance(0x0921, 3, 5, 5),
-                                                    new SetKey(-2, 0)
-                                                ),
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("You are many, yet the sum of your years is nothing."),
-                                                    SpawnMinionImmediate.Instance(0x0923, 3, 6, 6),
-                                                    SpawnMinionImmediate.Instance(0x0921, 3, 11, 11),
-                                                    new SetKey(-2, 0)
-                                                )
-                                            )
-                                        )
-                                    )
-                                ))
-                            )
+                        new State("HugeMob",
+                            new Taunt("You are many, yet the sum of your years is nothing."),
+                            new Spawn("Greater Nature Sprite", maxChildren: 6, initialSpawn: 0, coolDown: 400),
+                            new TossObject("Ent", range: 3, angle: 0, coolDown: 100000),
+                            new TossObject("Ent", range: 3, angle: 180, coolDown: 100000),
+                            new TossObject("Ent", range: 5, angle: 10, coolDown: 100000),
+                            new TossObject("Ent", range: 5, angle: 190, coolDown: 100000),
+                            new TossObject("Ent", range: 5, angle: 70, coolDown: 100000),
+                            new TossObject("Ent", range: 7, angle: 20, coolDown: 100000),
+                            new TossObject("Ent", range: 7, angle: 200, coolDown: 100000),
+                            new TossObject("Ent", range: 7, angle: 80, coolDown: 100000),
+                            new TossObject("Ent", range: 10, angle: 30, coolDown: 100000),
+                            new TossObject("Ent", range: 10, angle: 210, coolDown: 100000),
+                            new TossObject("Ent", range: 10, angle: 90, coolDown: 100000),
+                            new TimedTransition(5000, "Wait")
+                        ),
+                        new State("Mob",
+                            new Taunt("Little flies, little flies... we will swat you."),
+                            new Spawn("Greater Nature Sprite", maxChildren: 3, initialSpawn: 0, coolDown: 1000),
+                            new TossObject("Ent", range: 3, angle: 0, coolDown: 100000),
+                            new TossObject("Ent", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Ent", range: 5, angle: 10, coolDown: 100000),
+                            new TossObject("Ent", range: 6, angle: 190, coolDown: 100000),
+                            new TossObject("Ent", range: 7, angle: 20, coolDown: 100000),
+                            new TimedTransition(5000, "Wait")
+                        ),
+                        new State("SmallGroup",
+                            new Taunt("It will be trivial to dispose of you."),
+                            new Spawn("Greater Nature Sprite", maxChildren: 1, initialSpawn: 1, coolDown: 100000),
+                            new TossObject("Ent", range: 3, angle: 0, coolDown: 100000),
+                            new TossObject("Ent", range: 4.5, angle: 180, coolDown: 100000),
+                            new TimedTransition(3000, "Wait")
+                        ),
+                        new State("Solo",
+                            new Taunt("Mmm? Did you say something, mortal?"),
+                            new TimedTransition(3000, "Wait")
+                        ),
+                        new State("Wait",
+                            new Transform("Actual Ent Ancient")
                         )
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new OnHit(
-                            Once.Instance(
-                                new RunBehaviors(
-                                    new SimpleTaunt("Uhh. So... sleepy..."),
-                                    new SetKey(-1, 1),
-                                    SetConditionEffect.Instance(ConditionEffectIndex.Invincible)
-                                )
-                            )
-                        )
-                    }
-                ))
-            .Init(0x0920, Behaves("Actual Ent Ancient",
-                    SmoothWandering.Instance(0.5f, 2f),
-                    new RunBehaviors(
-                        IfExist.Instance(-1, NullBehavior.Instance,
-                            new RunBehaviors(
-                                Once.Instance(SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(400),
-                                    Once.Instance(new SimpleTaunt("With each attack, I only grow stronger."))
-                                ),
-                                SetSize.Instance(140),
-                                new QueuedBehavior(CooldownExact.Instance(2000), new SetKey(-1, 1)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 0),
-                                    RingAttack.Instance(3, projectileIndex: 0)
-                                ))
-                            )
+                    )
+                )
+            .Init("Actual Ent Ancient",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(0.2, range: 6),
+                            new Wander(0.2)
                         ),
-                        IfEqual.Instance(-1, 1,
-                            new RunBehaviors(
-            //Once.Instance(new SimpleTaunt("I have withstood far worse.")),
-                                SetSize.Instance(160),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 2)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 1),
-                                    RingAttack.Instance(3, projectileIndex: 1)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 2,
-                            new RunBehaviors(
-                                Once.Instance(new RandomTaunt(0.35, "Little mortals, your years are my minutes.")),
-                                SetSize.Instance(180),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 3)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 2),
-                                    RingAttack.Instance(3, projectileIndex: 2)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 3,
-                            new RunBehaviors(
-            //Once.Instance(new SimpleTaunt("I am the land, and you are trespassing here.")),
-                                SetSize.Instance(200),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 4)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 3),
-                                    RingAttack.Instance(3, projectileIndex: 3)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 4,
-                            new RunBehaviors(
-                                Once.Instance(new RandomTaunt(0.35, "No axe can fell me!")),
-                                SetSize.Instance(220),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 5)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 4),
-                                    RingAttack.Instance(3, projectileIndex: 4)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 5,
-                            new RunBehaviors(
-            //Once.Instance(new SimpleTaunt("The forests are mine to command!")),
-                                SetSize.Instance(240),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 6)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 5),
-                                    RingAttack.Instance(3, projectileIndex: 5)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 6,
-                            new RunBehaviors(
-                                Once.Instance(new RandomTaunt(0.35, "Yes, YES...")),
-                                SetSize.Instance(260),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 7)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 6),
-                                    RingAttack.Instance(3, projectileIndex: 6)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 7,
-                            new RunBehaviors(
-            //Once.Instance(new SimpleTaunt("Cower before me, mortals!")),
-                                SetSize.Instance(280),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 8)),
-                            Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 7),
-                                    RingAttack.Instance(3, projectileIndex: 7)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 8,
-                            new RunBehaviors(
-                                Once.Instance(new RandomTaunt(0.35, "I am the FOREST!!")),
-                                SetSize.Instance(300),
-                                new QueuedBehavior(CooldownExact.Instance(1600), new SetKey(-1, 9)),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 8),
-                                    RingAttack.Instance(3, projectileIndex: 8)
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-1, 9,
-                            new RunBehaviors(
-                                Once.Instance(new SimpleTaunt("YOU WILL DIE!!!")),
-                                Once.Instance(OrderGroup.Instance(20, "Greater Nature Sprites",
-                                    new Transmute(0x0924)
-                                )),
-                                SetSize.Instance(320),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(4000, UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                                    CooldownExact.Instance(4000, SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable))
-                                ),
-                                Cooldown.Instance(750, Rand.Instance(
-                                    SimpleAttack.Instance(10, projectileIndex: 9),
-                                    RingAttack.Instance(3, projectileIndex: 9)
-                                ))
-                            )
-                        )
-                    ),
-                    If.Instance(
-                        EntityLesserThan.Instance(10,5,0x0922),
-                        Reproduce.Instance(0x0922, 3, 3000, 1)
-                    ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 6, 0, 8,
-                            Tuple.Create(0.1, (ILoot)new TierLoot(1, ItemType.Ability)),
-                            Tuple.Create(0.1, (ILoot)new TierLoot(2, ItemType.Ability)),
-                            Tuple.Create(0.5, (ILoot)PotionLoot.Instance)
-                        ),
-                        Tuple.Create(100, new LootDef(0, 3, 0, 8,
-                            Tuple.Create(0.20, (ILoot)new TierLoot(6, ItemType.Weapon)),
-                            Tuple.Create(0.12, (ILoot)new TierLoot(7, ItemType.Weapon)),
+                        new Spawn("Ent Sapling", maxChildren: 3, initialSpawn: 0, coolDown: 3000),
+                        new State("Start",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 160),
 
-                            Tuple.Create(0.20, (ILoot)new TierLoot(6, ItemType.Armor)),
-                            Tuple.Create(0.12, (ILoot)new TierLoot(7, ItemType.Armor)),
+                            new Shoot(10, projectileIndex: 0, count: 1),
 
-                            Tuple.Create(0.80, (ILoot)new TierLoot(2, ItemType.Ring)),
-                            Tuple.Create(0.20, (ILoot)new TierLoot(3, ItemType.Ring)),
-                            Tuple.Create(0.05, (ILoot)new TierLoot(3, ItemType.Ability))
-                        ))
-                    )
-                ))
-            .Init(0x0922, Behaves("Ent Sapling",
-                    IfNot.Instance(
-                        Chasing.Instance(5.5f, 10, 8, 0x0920),
-                        SimpleWandering.Instance(5.5f)
-                    ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10))
-                ))
-            .Init(0x0921, Behaves("Ent",
-                    Chasing.Instance(1f, 10, 0, null),
-                    Cooldown.Instance(1000,
-                        IfNot.Instance(
-                            SimpleAttack.Instance(10),
-                            RingAttack.Instance(5)
+                            new TimedTransition(1600, "Growing1"),
+                            new HpLessTransition(0.9, "Growing1")
+                        ),
+                        new State("Growing1",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 180),
+
+                            new Shoot(10, projectileIndex: 1, count: 3, shootAngle: 120),
+
+                            new TimedTransition(1600, "Growing2"),
+                            new HpLessTransition(0.8, "Growing2")
+                        ),
+                        new State("Growing2",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 200),
+                            new Taunt(0.35, "Little mortals, your years are my minutes."),
+
+                            new Shoot(10, projectileIndex: 2, count: 1),
+
+                            new TimedTransition(1600, "Growing3"),
+                            new HpLessTransition(0.7, "Growing3")
+                        ),
+                        new State("Growing3",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 220),
+
+                            new Shoot(10, projectileIndex: 3, count: 1),
+
+                            new TimedTransition(1600, "Growing4"),
+                            new HpLessTransition(0.6, "Growing4")
+                        ),
+                        new State("Growing4",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 240),
+                            new Taunt(0.35, "No axe can fell me!"),
+
+                            new Shoot(10, projectileIndex: 4, count: 3, shootAngle: 120),
+
+                            new TimedTransition(1600, "Growing5"),
+                            new HpLessTransition(0.5, "Growing5")
+                        ),
+                        new State("Growing5",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 260),
+
+                            new Shoot(10, projectileIndex: 5, count: 1),
+
+                            new TimedTransition(1600, "Growing6"),
+                            new HpLessTransition(0.45, "Growing6")
+                        ),
+                        new State("Growing6",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 280),
+                            new Taunt(0.35, "Yes, YES..."),
+
+                            new Shoot(10, projectileIndex: 6, count: 1),
+
+                            new TimedTransition(1600, "Growing7"),
+                            new HpLessTransition(0.4, "Growing7")
+                        ),
+                        new State("Growing7",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 300),
+
+                            new Shoot(10, projectileIndex: 7, count: 3, shootAngle: 120),
+
+                            new TimedTransition(1600, "Growing8"),
+                            new HpLessTransition(0.36, "Growing8")
+                        ),
+                        new State("Growing8",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new ChangeSize(11, 320),
+                            new Taunt(0.35, "I am the FOREST!!"),
+
+                            new Shoot(10, projectileIndex: 8, count: 1),
+
+                            new TimedTransition(1600, "Growing9"),
+                            new HpLessTransition(0.32, "Growing9")
+                        ),
+                        new State("Growing9",
+                            new ChangeSize(11, 340),
+                            new Taunt(1.0, "YOU WILL DIE!!!"),
+
+                            new Shoot(10, projectileIndex: 9, count: 1),
+
+                            new State("convert_sprites",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Order(50, "Greater Nature Sprite", "Transform"),
+                                new TimedTransition(2000, "shielded")
+                            ),
+                            new State("received_armor",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new ConditionalEffect(ConditionEffectIndex.Armored, perm: true),
+                                new TimedTransition(1000, "shielded")
+                            ),
+                            new State("shielded",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new TimedTransition(4000, "unshielded")
+                            ),
+                            new State("unshielded",
+                                new Shoot(10, projectileIndex: 3, count: 3, shootAngle: 120, coolDown: 700),
+                                new TimedTransition(4000, "shielded")
+                            )
                         )
                     ),
-                    new RunBehaviors(
-                        new QueuedBehavior(
-                            CooldownExact.Instance(5000),
-                            Timed.Instance(2000, False.Instance(
-                                new RunBehaviors(
-                                    SetSize.Instance(140),
-                                    Flashing.Instance(500, 0xff00ff00)
-                                )
-                            )),
-                            CooldownExact.Instance(5000),
-                            Timed.Instance(2000, False.Instance(
-                                new RunBehaviors(
-                                    SetSize.Instance(160),
-                                    Flashing.Instance(500, 0xff00ff00)
-                                )
-                            )),
-                            CooldownExact.Instance(5000),
-                            Timed.Instance(2000, False.Instance(
-                                new RunBehaviors(
-                                    SetSize.Instance(180),
-                                    Flashing.Instance(500, 0xff00ff00)
-                                )
-                            )),
-                            CooldownExact.Instance(5000),
-                            Timed.Instance(2000, False.Instance(
-                                new RunBehaviors(
-                                    SetSize.Instance(200),
-                                    Flashing.Instance(500, 0xff00ff00)
-                                )
-                            ))
+                    new TierLoot(2, ItemType.Ring, 0.15),
+                    new TierLoot(3, ItemType.Ring, 0.04),
+                    new TierLoot(6, ItemType.Weapon, 0.3),
+                    new TierLoot(7, ItemType.Weapon, 0.1),
+                    new TierLoot(6, ItemType.Armor, 0.3),
+                    new TierLoot(7, ItemType.Armor, 0.1),
+                    new TierLoot(1, ItemType.Ability, 0.95),
+                    new TierLoot(2, ItemType.Ability, 0.25),
+                    new TierLoot(3, ItemType.Ability, 0.05),
+                    new ItemLoot("Health Potion", 0.7),
+                    new ItemLoot("Magic Potion", 0.7)
+                )
+            .Init("Ent",
+                    new State(
+                        new Prioritize(
+                            new Protect(0.25, "Ent Ancient", acquireRange: 12, protectionRange: 7, reprotectRange: 7),
+                            new Follow(0.25, range: 1, acquireRange: 9),
+                            new Shoot(10, count: 5, shootAngle: 72, fixedAngle: 30, coolDown: 1600, coolDownOffset: 800)
                         ),
-                        new QueuedBehavior(
-                            CooldownExact.Instance(90000),
-                            Despawn.Instance
-                        )
+                        new Shoot(10, predictive: 0.4, coolDown: 600),
+                        new Decay(90000)
                     ),
-                    loot: new LootBehavior(LootDef.Empty,
-                        Tuple.Create(100, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.01, (ILoot)new ItemLoot("Tincture of Dexterity"))
-                        ))
-                    )
-                ))
-            .Init(0x0923, Behaves("Greater Nature Sprite",
-                    If.Instance(
-                        WithinSpawn.Instance(11),
-                        Circling.Instance(4, 10, 15, null),
-                        ReturnSpawn.Instance(15)
-                    ),
-                    new RunBehaviors(
-                        Once.Instance(SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                        Cooldown.Instance(1000, MultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4)),
-                        new QueuedBehavior(
-                            CooldownExact.Instance(90000),
-                            Despawn.Instance
+                    new ItemLoot("Tincture of Dexterity", 0.02)
+                )
+            .Init("Ent Sapling",
+                    new State(
+                        new Prioritize(
+                            new Protect(0.55, "Ent Ancient", acquireRange: 10, protectionRange: 4, reprotectRange: 4),
+                            new Wander(0.55)
                         ),
-                        Reproduce.Instance(0x0921, 5, 3000)
+                        new Shoot(10, coolDown: 1000)
                     )
-                ))
-            .Init(0x0924, Behaves("Actual Greater Nature Sprite",
-                    If.Instance(
-                        WithinSpawn.Instance(11),
-                        Circling.Instance(4, 10, 15, null),
-                        ReturnSpawn.Instance(15)
-                    ),
-                    new RunBehaviors(
-                        Flashing.Instance(1000, 0xff000000),
-                        Cooldown.Instance(2000, HealGroup.Instance(20, 500, "Heros")),
-                        Cooldown.Instance(5000,
-                            OrderGroup.Instance(20, "Heros",
-                                new SetConditionEffectTimed(ConditionEffectIndex.Armored, 5000)
+                )
+            .Init("Greater Nature Sprite",
+                    new State(
+                        new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                        new Shoot(10, count: 4, shootAngle: 10),
+                        new Prioritize(
+                            new StayCloseToSpawn(1.5, 11),
+                            new Orbit(1.5, 4, acquireRange: 7),
+                            new Follow(200, acquireRange: 7, range: 2),
+                            new Follow(0.3, acquireRange: 7, range: 0.2)
+                        ),
+                        new State("Idle"),
+                        new State("Transform",
+                            new Transform("Actual Greater Nature Sprite")
+                        ),
+                        new Decay(90000)
+                    )
+                )
+            .Init("Actual Greater Nature Sprite",
+                    new State(
+                        new Flash(0xff484848, 0.6, 1000),
+                        new Spawn("Ent", maxChildren: 2, initialSpawn: 0, coolDown: 3000),
+                        new Heal(15, "Heros", coolDown: 200),
+
+                        new State("armor_ent_ancient",
+                            new Order(30, "Actual Ent Ancient", "received_armor"),
+                            new TimedTransition(1000, "last_fight")
+                        ),
+                        new State("last_fight",
+                            new Shoot(10, count: 4, shootAngle: 10),
+                            new Prioritize(
+                                new StayCloseToSpawn(1.5, 11),
+                                new Orbit(1.5, 4, acquireRange: 7),
+                                new Follow(200, acquireRange: 7, range: 2),
+                                new Follow(0.3, acquireRange: 7, range: 0.2)
                             )
                         ),
-                        Cooldown.Instance(1000, MultiAttack.Instance(10, 10 * (float)Math.PI / 180, 4)),
-                        new QueuedBehavior(
-                            CooldownExact.Instance(60000),
-                            Despawn.Instance
-                        ),
-                        Reproduce.Instance(0x0921, 5, 3000)
+                        new Decay(60000)
                     ),
-                    loot: new LootBehavior(
-                        new LootDef(0, 2, 0, 8,
-                            Tuple.Create(0.25, (ILoot)MpPotionLoot.Instance)
-                        ),
-                        Tuple.Create(100, new LootDef(0, 1, 0, 8,
-                            Tuple.Create(0.001, (ILoot)new ItemLoot("Quiver of Thunder")),
-                            Tuple.Create(0.06, (ILoot)new ItemLoot("Tincture of Dexterity")),
-                            Tuple.Create(0.06, (ILoot)new ItemLoot("Tincture of Life")),
-                            Tuple.Create(0.08, (ILoot)new ItemLoot("Green Drake Egg")),
-                            Tuple.Create(0.01, (ILoot)new StatPotionLoot(StatPotion.Att)),
-                            Tuple.Create(0.03, (ILoot)new TierLoot(7, ItemType.Armor))
-                        ))
-                    )
-                ));
+                    new ItemLoot("Magic Potion", 0.25),
+                    new ItemLoot("Tincture of Life", 0.06),
+                    new ItemLoot("Green Drake Egg", 0.08),
+                    new ItemLoot("Quiver of Thunder", 0.002),
+                    new TierLoot(8, ItemType.Armor, 0.3)
+                )
+                ;
     }
 }

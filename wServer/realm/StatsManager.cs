@@ -71,16 +71,20 @@ namespace wServer.realm
                 ret = 0;
             return ret;
         }
-        public float GetSpeed()
+        public static float GetSpeed(Entity entity, float stat)
         {
-            var ret = 4 + 5.6f * (GetStats(4) / 75f);
-            if (player.HasConditionEffect(ConditionEffects.Speedy))
+            var ret = 4 + 5.6f * (stat / 75f);
+            if (entity.HasConditionEffect(ConditionEffects.Speedy))
                 ret *= 1.5f;
-            if (player.HasConditionEffect(ConditionEffects.Slowed))
+            if (entity.HasConditionEffect(ConditionEffects.Slowed))
                 ret = 4;
-            if (player.HasConditionEffect(ConditionEffects.Paralyzed))
+            if (entity.HasConditionEffect(ConditionEffects.Paralyzed))
                 ret = 0;
             return ret;
+        }
+        public float GetSpeed()
+        {
+            return GetSpeed(player, GetStats(4));
         }
         public float GetHPRegen()
         {

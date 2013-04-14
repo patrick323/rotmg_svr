@@ -50,6 +50,7 @@ namespace wServer
 
         public void BeginHandling()
         {
+            Console.WriteLine("{0} connected.", skt.RemoteEndPoint);
             send = new SocketAsyncEventArgs();
             send.Completed += IOCompleted;
             send.UserToken = new SendToken();
@@ -64,6 +65,18 @@ namespace wServer
             receive.SetBuffer(0, 5);
             if (!skt.ReceiveAsync(receive))
                 IOCompleted(this, receive);
+        }
+
+        void ProcessPolicyFile()    //WUT.
+        {
+            var s = new NetworkStream(skt);
+            NWriter wtr = new NWriter(s);
+            wtr.WriteNullTerminatedString(@"<cross-domain-policy>
+     <allow-access-from domain=""*"" to-ports=""*"" />
+</cross-domain-policy>");
+            wtr.Write((byte)'\r');
+            wtr.Write((byte)'\n');
+            parent.Disconnect();
         }
 
         void IOCompleted(object sender, SocketAsyncEventArgs e)
@@ -86,6 +99,13 @@ namespace wServer
                                 if (e.BytesTransferred < 5)
                                 {
                                     parent.Disconnect();
+                                    return;
+                                }
+
+                                if (e.Buffer[0] == 0x3c && e.Buffer[1] == 0x70 &&
+                                    e.Buffer[2] == 0x6f && e.Buffer[3] == 0x6c && e.Buffer[4] == 0x69)
+                                {
+                                    ProcessPolicyFile();
                                     return;
                                 }
 
@@ -116,7 +136,7 @@ namespace wServer
                                 receiveState = ReceiveState.Processing;
                                 bool cont = OnPacketReceived(pkt);
 
-                                if (cont)
+                                if (cont && skt.Connected)
                                 {
                                     receiveState = ReceiveState.ReceivingHdr;
                                     e.SetBuffer(0, 5);
@@ -149,7 +169,7 @@ namespace wServer
                             case SendState.Sending:
                                 (e.UserToken as SendToken).Packet = null;
 
-                                if (CanSendPacket(e,true))
+                                if (CanSendPacket(e, true))
                                 {
                                     repeat = true;
                                     continue;
@@ -179,7 +199,7 @@ namespace wServer
             return parent.ProcessPacket(pkt);
         }
         ConcurrentQueue<Packet> pendingPackets = new ConcurrentQueue<Packet>();
-        bool CanSendPacket(SocketAsyncEventArgs e,bool ignoreSending)
+        bool CanSendPacket(SocketAsyncEventArgs e, bool ignoreSending)
         {
             lock (sendLock)
             {

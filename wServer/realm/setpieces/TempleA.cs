@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm.entities;
-using wServer.logic.loot;
 
 namespace wServer.realm.setpieces
 {
@@ -94,14 +93,8 @@ namespace wServer.realm.setpieces
             //Boss & Chest
 
             Container container = new Container(0x0501, null, false);
-            int count = rand.Next(3, 8);
-            List<Item> items = new List<Item>();
-            while (items.Count < count)
-            {
-                Item item = chest.GetRandomLoot(rand);
-                if (item != null) items.Add(item);
-            }
-            for (int i = 0; i < items.Count; i++)
+            Item[] items = chest.GetLoots(3, 8).ToArray();
+            for (int i = 0; i < items.Length; i++)
                 container.Inventory[i] = items[i];
             container.Move(pos.X + Size / 2, pos.Y + Size / 2);
             world.EnterWorld(container);

@@ -23,7 +23,7 @@ namespace wServer.realm.entities
             });
         }
 
-        public void EditAccountList(RealmTime time, EditAccountListPacket pkt)
+        public void EditAccountList(EditAccountListPacket pkt)
         {
             List<int> list;
             if (pkt.AccountListId == LOCKED_LIST_ID)

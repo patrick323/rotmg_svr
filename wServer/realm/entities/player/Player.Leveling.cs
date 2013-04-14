@@ -84,7 +84,7 @@ namespace wServer.realm.entities
             { "Ghost Ship",                 Tuple.Create(13,15, 20) },
 
             { "Evil Chicken God",           Tuple.Create(15,1, 20) },
-            { "Bonegrind The Butcher",      Tuple.Create(15,1, 20) },
+            { "Bonegrind the Butcher",      Tuple.Create(15,1, 20) },
             { "Dreadstump the Pirate King", Tuple.Create(15,1, 20) },
             { "Arachna the Spider Queen",   Tuple.Create(15,1, 20) },
             { "Stheno the Snake Queen",     Tuple.Create(15,1, 20) },

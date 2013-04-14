@@ -50,7 +50,7 @@ namespace terrain
     struct TerrainTile : IEquatable<TerrainTile>
     {
         public int PolygonId;
-        public float Elevation;
+        public byte Elevation;
         public float Moisture;
         public string Biome;
         public short TileId;

@@ -18,6 +18,14 @@ namespace wServer.realm
         public int thisTickCounts;
         public int thisTickTimes;
     }
+    public class TimeEventArgs : EventArgs
+    {
+        public TimeEventArgs(RealmTime time)
+        {
+            this.Time = time;
+        }
+        public RealmTime Time { get; private set; }
+    }
 
     public enum PendingPriority
     {

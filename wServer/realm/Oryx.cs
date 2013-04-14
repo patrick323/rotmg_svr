@@ -43,7 +43,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.LowPlains, Tuple.Create(
-                250, new []
+                200, new []
                 {
                     Tuple.Create("Hobbit Mage", 0.5),
                     Tuple.Create("Undead Hobbit Mage", 0.4),
@@ -51,7 +51,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.LowForest, Tuple.Create(
-                250, new []
+                200, new []
                 {
                     Tuple.Create("Elf Wizard", 0.2),
                     Tuple.Create("Goblin Mage", 0.2),
@@ -68,7 +68,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.MidPlains, Tuple.Create(
-                200, new []
+                150, new []
                 {
                     Tuple.Create("Fire Sprite", 0.1),
                     Tuple.Create("Ice Sprite", 0.1),
@@ -85,7 +85,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.MidForest, Tuple.Create(
-                200, new []
+                150, new []
                 {
                     Tuple.Create("Dwarf King", 0.3),
                     Tuple.Create("Metal Golem", 0.05),
@@ -97,7 +97,7 @@ namespace wServer.realm
                 })
             },
             { WmapTerrain.MidSand, Tuple.Create(
-                200, new []
+                300, new []
                 {
                     Tuple.Create("Desert Werewolf", 0.25),
                     Tuple.Create("Fire Golem", 0.1),
@@ -208,7 +208,7 @@ namespace wServer.realm
                     pt.Y = rand.Next(0, h);
                 } while (world.Map[pt.X, pt.Y].Terrain != terrain ||
                          world.Obstacles[pt.X, pt.Y] != 0 ||
-                         Behavior.HasPlayerNearby(world, pt.X, pt.Y));
+                         world.AnyPlayerNearby(pt.X, pt.Y));
 
                 for (int k = 0; k < num; k++)
                 {
@@ -229,7 +229,7 @@ namespace wServer.realm
                     pt.Y = rand.Next(0, h);
                 } while (world.Map[pt.X, pt.Y].Terrain != terrain ||
                          world.Obstacles[pt.X, pt.Y] != 0 ||
-                         Behavior.HasPlayerNearby(world, pt.X, pt.Y));
+                         world.AnyPlayerNearby(pt.X, pt.Y));
 
                 entity = Entity.Resolve(desc.ObjectType);
                 entity.Move(pt.X, pt.Y);
@@ -315,9 +315,8 @@ namespace wServer.realm
             foreach (var i in world.Enemies)    //Kill
             {
                 int idx = (int)i.Value.Terrain - 1;
-                float dist = 10;
                 if (idx == -1 || state[idx] == 0 ||
-                    Behavior.GetNearestEntity(i.Value, ref dist, true) != null ||
+                    i.Value.GetNearestEntity(10, true) != null ||
                     diff[idx] == 0)
                     continue;
 
@@ -662,7 +661,7 @@ namespace wServer.realm
             } while ((world.Map[pt.X, pt.Y].Terrain < WmapTerrain.Mountains ||
                       world.Map[pt.X, pt.Y].Terrain > WmapTerrain.MidForest) ||
                       world.Obstacles[pt.X, pt.Y] != 0 ||
-                      Behavior.HasPlayerNearby(world, pt.X, pt.Y));
+                      world.AnyPlayerNearby(pt.X, pt.Y));
 
             pt.X -= (setpiece.Size - 1) / 2;
             pt.Y -= (setpiece.Size - 1) / 2;

@@ -21,6 +21,10 @@ namespace wServer.realm.entities
             Entity en2 = Owner.GetEntity(pkt.Obj2.ObjectId);
             IContainer con1 = en1 as IContainer;
             IContainer con2 = en2 as IContainer;
+            if (con1 == null || con2 == null)
+            {
+                return;
+            }
 
             //TODO: locker
             Item item1 = con1.Inventory[pkt.Obj1.SlotId];
@@ -65,7 +69,7 @@ namespace wServer.realm.entities
             if (item.Soulbound)
             {
                 container = new Container(SOUL_BAG, 1000 * 60, true);
-                container.BagOwner = AccountId;
+                container.BagOwners = new int[] { AccountId };
             }
             else
                 container = new Container(NORM_BAG, 1000 * 60, true);

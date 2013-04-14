@@ -70,16 +70,25 @@ namespace wServer
 
         static void Listen(IAsyncResult ar)
         {
+            Socket skt = null;
             try
             {
-                Socket skt = svrSkt.EndAccept(ar);
-                svrSkt.BeginAccept(Listen, null);
-
-                var psr = new ClientProcessor(skt);
-                psr.BeginProcess();
+                skt = svrSkt.EndAccept(ar);
             }
             catch (ObjectDisposedException)
             {
+            }
+            try
+            {
+                svrSkt.BeginAccept(Listen, null);
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            if (skt != null)
+            {
+                var psr = new ClientProcessor(skt);
+                psr.BeginProcess();
             }
         }
     }

@@ -24,7 +24,7 @@ namespace wServer.logic
             this.enemy = enemy;
         }
 
-        public void HitBy(Player player, Projectile projectile, int dmg)
+        public void HitBy(Player player, RealmTime time, Projectile projectile, int dmg)
         {
             int totalDmg;
             if (!hitters.TryGetValue(player, out totalDmg))
@@ -51,7 +51,7 @@ namespace wServer.logic
             return dat.ToArray();
         }
 
-        public void Death()
+        public void Death(RealmTime time)
         {
             if (Corpse != null)
             {

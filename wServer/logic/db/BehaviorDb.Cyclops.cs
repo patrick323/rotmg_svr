@@ -3,157 +3,135 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ Cyclops = Behav()
-            .Init(0x67d, Behaves("Cyclops God",
-                    SmoothWandering.Instance(3f, 3f),
-                    new RunBehaviors(
-                        Once.Instance(
-                            new RunBehaviors(
-                                SpawnMinionImmediate.Instance(0x67e, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x67f, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x680, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x681, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x682, 1, 1, 3)
-                            )
+            .Init("Cyclops God",
+                    new State(
+                        new State("idle",
+                            new PlayerWithinTransition(11, "blade_attack"),
+                            new HpLessTransition(0.8, "blade_attack")
                         ),
-                        new QueuedBehavior(
-                            Rand.Instance(
-                                SpawnMinionImmediate.Instance(0x67e, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x67f, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x680, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x681, 1, 1, 3),
-                                SpawnMinionImmediate.Instance(0x682, 1, 1, 3),
-                                NullBehavior.Instance
+                        new State("blade_attack",
+                            new Prioritize(
+                                new Follow(0.4, range: 7),
+                                new Wander(0.4)
                             ),
-                            True.Instance(Rand.Instance(
-                                new RandomTaunt(0.1, "I will floss with your tendons!"),
-                                new RandomTaunt(0.1, "I smell the blood of an Englishman!"),
-                                new RandomTaunt(0.1, "I will suck the marrow from your bones!"),
-                                new RandomTaunt(0.1, "You will be my food, {PLAYER}!"),
-                                new RandomTaunt(0.1, "Blargh!!"),
-                                new RandomTaunt(0.1, "Leave my castle!"),
-                                new RandomTaunt(0.1, "More wine!")
-                            )),
-                            Cooldown.Instance(2000)
+                            new Shoot(10, projectileIndex: 4, count: 1, shootAngle: 15, predictive: 0.5, coolDown: 100000),
+                            new Shoot(10, projectileIndex: 4, count: 2, shootAngle: 10, predictive: 0.5, coolDown: 100000, coolDownOffset: 700),
+                            new Shoot(10, projectileIndex: 4, count: 3, shootAngle: 8.5, predictive: 0.5, coolDown: 100000, coolDownOffset: 1400),
+                            new Shoot(10, projectileIndex: 4, count: 4, shootAngle: 7, predictive: 0.5, coolDown: 100000, coolDownOffset: 2100),
+                            new TimedTransition(4000, "if_cloaked1")
                         ),
-                        If.Instance(
-                            IsEntityPresent.Instance(10, null),
-                            new QueuedBehavior(
-                                PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3, 1, projectileIndex: 4),
-                                Cooldown.Instance(1000),
-                                PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3, 1, projectileIndex: 4),
-                                Cooldown.Instance(1000),
-                                PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3, 1, projectileIndex: 4),
-                                Cooldown.Instance(1000),
-                                PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3, 1, projectileIndex: 4),
-                                Cooldown.Instance(1000),
-                                PredictiveMultiAttack.Instance(10, 10 * (float)Math.PI / 180, 3, 1, projectileIndex: 4),
-                                Cooldown.Instance(1000),
-
-                                new RunBehaviors(
-                                    SimpleAttack.Instance(10, projectileIndex: 0),
-                                    SimpleAttack.Instance(10, projectileIndex: 1),
-                                    SimpleAttack.Instance(10, projectileIndex: 2),
-                                    SimpleAttack.Instance(10, projectileIndex: 3)
-                                ),
-                                Cooldown.Instance(1000),
-                                new RunBehaviors(
-                                    SimpleAttack.Instance(10, projectileIndex: 0),
-                                    SimpleAttack.Instance(10, projectileIndex: 1),
-                                    SimpleAttack.Instance(10, projectileIndex: 2),
-                                    SimpleAttack.Instance(10, projectileIndex: 3)
-                                ),
-                                Cooldown.Instance(1000),
-                                new RunBehaviors(
-                                    SimpleAttack.Instance(10, projectileIndex: 0),
-                                    SimpleAttack.Instance(10, projectileIndex: 1),
-                                    SimpleAttack.Instance(10, projectileIndex: 2),
-                                    SimpleAttack.Instance(10, projectileIndex: 3)
-                                ),
-                                Cooldown.Instance(1000),
-                                new RunBehaviors(
-                                    SimpleAttack.Instance(10, projectileIndex: 0),
-                                    SimpleAttack.Instance(10, projectileIndex: 1),
-                                    SimpleAttack.Instance(10, projectileIndex: 2),
-                                    SimpleAttack.Instance(10, projectileIndex: 3)
-                                ),
-                                Cooldown.Instance(1000),
-                                new RunBehaviors(
-                                    SimpleAttack.Instance(10, projectileIndex: 0),
-                                    SimpleAttack.Instance(10, projectileIndex: 1),
-                                    SimpleAttack.Instance(10, projectileIndex: 2),
-                                    SimpleAttack.Instance(10, projectileIndex: 3)
-                                ),
-                                Cooldown.Instance(1000)
+                        new State("if_cloaked1",
+                            new Shoot(10, projectileIndex: 4, count: 15, shootAngle: 24, fixedAngle: 8, coolDown: 1500, coolDownOffset: 400),
+                            new TimedTransition(10000, "wave_attack"),
+                            new PlayerWithinTransition(10.5, "wave_attack")
+                        ),
+                        new State("wave_attack",
+                            new Prioritize(
+                                new Follow(0.6, range: 5),
+                                new Wander(0.6)
                             ),
-                            Cooldown.Instance(1000, RingAttack.Instance(10, projectileIndex: 4))
-                        )
+                            new Shoot(9, projectileIndex: 0, coolDown: 700, coolDownOffset: 700),
+                            new Shoot(9, projectileIndex: 1, coolDown: 700, coolDownOffset: 700),
+                            new Shoot(9, projectileIndex: 2, coolDown: 700, coolDownOffset: 700),
+                            new Shoot(9, projectileIndex: 3, coolDown: 700, coolDownOffset: 700),
+                            new TimedTransition(3800, "if_cloaked2")
+                        ),
+                        new State("if_cloaked2",
+                            new Shoot(10, projectileIndex: 4, count: 15, shootAngle: 24, fixedAngle: 8, coolDown: 1500, coolDownOffset: 400),
+                            new TimedTransition(10000, "idle"),
+                            new PlayerWithinTransition(10.5, "idle")
+                        ),
+                        new Taunt(0.7, 10000, "I will floss with your tendons!",
+                                       "I smell the blood of an Englishman!",
+                                       "I will suck the marrow from your bones!",
+                                       "You will be my food, {PLAYER}!",
+                                       "Blargh!!",
+                                       "Leave my castle!",
+                                       "More wine!"
+                                 ),
+                        new StayCloseToSpawn(1.2, 5),
+                        new Spawn("Cyclops", maxChildren: 5, coolDown: 10000),
+                        new Spawn("Cyclops Warrior", maxChildren: 5, coolDown: 10000),
+                        new Spawn("Cyclops Noble", maxChildren: 5, coolDown: 10000),
+                        new Spawn("Cyclops Prince", maxChildren: 5, coolDown: 10000),
+                        new Spawn("Cyclops King", maxChildren: 5, coolDown: 10000)
                     )
-                ))
-            .Init(0x67e, Behaves("Cyclops",
-                    If.Instance(
-                        IsEntityPresent.Instance(10, null),
-                        new QueuedBehavior(
-                            Not.Instance(Chasing.Instance(10f, 10, 2, null)),
-                            Timed.Instance(1000, False.Instance(Retracting.Instance(8f, 8, null)))
+                )
+            .Init("Cyclops",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(1.2, 5),
+                            new Follow(1.2, range: 1),
+                            new Wander(0.4)
                         ),
-                        SimpleWandering.Instance(10)
+                        new Shoot(3)
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10))
-                ))
-            .Init(0x67f, Behaves("Cyclops Warrior",
-                    If.Instance(
-                        IsEntityPresent.Instance(10, null),
-                        new QueuedBehavior(
-                            Not.Instance(Chasing.Instance(10f, 10, 2, null)),
-                            Timed.Instance(1000, False.Instance(Retracting.Instance(8f, 8, null)))
+                    new ItemLoot("Golden Sword", 0.02),
+                    new ItemLoot("Studded Leather Armor", 0.02),
+                    new ItemLoot("Health Potion", 0.05)
+                )
+            .Init("Cyclops Warrior",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(1.2, 5),
+                            new Follow(1.2, range: 1),
+                            new Wander(0.4)
                         ),
-                        SimpleWandering.Instance(10)
+                        new Shoot(3)
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10))
-                ))
-            .Init(0x680, Behaves("Cyclops Noble",
-                    If.Instance(
-                        IsEntityPresent.Instance(10, null),
-                        new QueuedBehavior(
-                            Not.Instance(Chasing.Instance(10f, 10, 2, null)),
-                            Timed.Instance(1000, False.Instance(Retracting.Instance(8f, 8, null)))
+                    new ItemLoot("Golden Sword", 0.03),
+                    new ItemLoot("Golden Shield", 0.02),
+                    new ItemLoot("Health Potion", 0.05)
+                )
+            .Init("Cyclops Noble",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(1.2, 5),
+                            new Follow(1.2, range: 1),
+                            new Wander(0.4)
                         ),
-                        SimpleWandering.Instance(10)
+                        new Shoot(3)
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10))
-                ))
-            .Init(0x681, Behaves("Cyclops Prince",
-                    If.Instance(
-                        IsEntityPresent.Instance(10, null),
-                        new QueuedBehavior(
-                            Not.Instance(Chasing.Instance(10f, 10, 2, null)),
-                            Timed.Instance(1000, False.Instance(Retracting.Instance(8f, 8, null)))
+                    new ItemLoot("Golden Dagger", 0.02),
+                    new ItemLoot("Studded Leather Armor", 0.02),
+                    new ItemLoot("Health Potion", 0.05)
+                )
+            .Init("Cyclops Prince",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(1.2, 5),
+                            new Follow(1.2, range: 1),
+                            new Wander(0.4)
                         ),
-                        SimpleWandering.Instance(10)
+                        new Shoot(3)
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10))
-                ))
-            .Init(0x682, Behaves("Cyclops King",
-                    If.Instance(
-                        IsEntityPresent.Instance(10, null),
-                        new QueuedBehavior(
-                            Not.Instance(Chasing.Instance(10f, 10, 2, null)),
-                            Timed.Instance(1000, False.Instance(Retracting.Instance(8f, 8, null)))
+                    new ItemLoot("Mithril Dagger", 0.02),
+                    new ItemLoot("Plate Mail", 0.02),
+                    new ItemLoot("Seal of the Divine", 0.01),
+                    new ItemLoot("Health Potion", 0.05)
+                )
+            .Init("Cyclops King",
+                    new State(
+                        new Prioritize(
+                            new StayCloseToSpawn(1.2, 5),
+                            new Follow(1.2, range: 1),
+                            new Wander(0.4)
                         ),
-                        SimpleWandering.Instance(10)
+                        new Shoot(3)
                     ),
-                    Cooldown.Instance(1000, SimpleAttack.Instance(10))
-                ));
+                    new ItemLoot("Golden Sword", 0.02),
+                    new ItemLoot("Mithril Armor", 0.02),
+                    new ItemLoot("Health Potion", 0.05)
+                )
+                ;
     }
 }

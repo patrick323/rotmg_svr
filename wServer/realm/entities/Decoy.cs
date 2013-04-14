@@ -57,7 +57,7 @@ namespace wServer.realm.entities
         {
             if (HP > duration / 2)
             {
-                Behavior.ValidateAndMove(this,
+                this.ValidateAndMove(
                     X + direction.X * speed * time.thisTickTimes / 1000,
                     Y + direction.Y * speed * time.thisTickTimes / 1000
                 );

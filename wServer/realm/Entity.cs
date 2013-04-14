@@ -9,7 +9,7 @@ using wServer.svrPackets;
 
 namespace wServer.realm
 {
-    public class Entity : IBehaviorHost, IProjectileOwner, ICollidable<Entity>
+    public class Entity : IProjectileOwner, ICollidable<Entity>
     {
         public Entity(short objType)
             : this(objType, true)
@@ -130,19 +130,96 @@ namespace wServer.realm
             if (interactive && Owner != null)
             {
                 if (!HasConditionEffect(ConditionEffects.Stasis))
-                {
-                    MovementBehavior.Tick(this, time);
-                    AttackBehavior.Tick(this, time);
-                    ReproduceBehavior.Tick(this, time);
-                }
-                foreach (var i in CondBehaviors)
-                    if ((i.Condition & BehaviorCondition.Other) != 0 &&
-                        i.ConditionMeet(this))
-                        i.Behave(BehaviorCondition.Other, this, time, null);
+                    TickState(time);
                 posHistory[posIdx++] = new Position() { X = X, Y = Y };
                 ProcessConditionEffects(time);
             }
         }
+
+
+        Dictionary<object, object> states;
+        public IDictionary<object, object> StateStorage
+        {
+            get
+            {
+                if (states == null) states = new Dictionary<object, object>();
+                return states;
+            }
+        }
+        public State CurrentState { get; private set; }
+        public void SwitchTo(State state)
+        {
+            CurrentState = state;
+            stateEntry = state;
+            if (Owner != null)
+                Owner.BroadcastPacket(new NotificationPacket()
+                {
+                    ObjectId = Id,
+                    Color = new ARGB(0xFF00FF00),
+                    Text = state.Name
+                }, null);
+        }
+        State stateEntry = null;
+        void TickState(RealmTime time)
+        {
+            State state = CurrentState;
+            if (state == null) return;
+            while (state.States.Count > 0)  //always the first deepest sub-state
+                state = CurrentState = state.States[0];
+
+
+            var localState = state;
+            var localEntry = stateEntry;
+            bool entry = localEntry != null;
+            bool transited = false;
+            while (state != null)
+            {
+                if (localEntry != null && state == localEntry.Parent)
+                    entry = false;
+                if (!transited)
+                    foreach (var i in state.Transitions)
+                        if (i.Tick(this, time))
+                        {
+                            transited = true;
+                            break;
+                        }
+
+                foreach (var i in state.Behaviors)
+                {
+                    if (entry)
+                        i.OnStateEntry(this, time);
+                    if (Owner == null) break;
+                    i.Tick(this, time);
+                }
+                if (Owner == null) break;
+
+                state = state.Parent;
+            }
+            if (!transited)
+                stateEntry = null;
+            else
+            {
+                state = localState;
+                while (state != null)
+                {
+                    if (!CurrentState.Is(state))
+                        foreach (var i in state.Behaviors)
+                        {
+                            if (Owner == null) break;
+                            i.OnStateExit(this, time);
+                        }
+                    if (Owner == null) break;
+                    state = state.Parent;
+                }
+                if (CurrentState != null)
+                {
+                    while (CurrentState.States.Count > 0)
+                        CurrentState = CurrentState.States[0];
+                }
+            }
+        }
+
+
         public Position? TryGetHistory(long timeAgo)
         {
             if (posHistory == null) return null;
@@ -218,23 +295,7 @@ namespace wServer.realm
             }
         }
 
-        Dictionary<int, object> states;
-        IDictionary<int, object> IBehaviorHost.StateStorage
-        {
-            get
-            {
-                if (states == null) states = new Dictionary<int, object>();
-                return states;
-            }
-        }
-        Entity IBehaviorHost.Self { get { return this; } }
         Entity IProjectileOwner.Self { get { return this; } }
-
-        public Behavior AttackBehavior { get; set; }
-        public Behavior MovementBehavior { get; set; }
-        public Behavior ReproduceBehavior { get; set; }
-        public ConditionalBehavior[] CondBehaviors { get; set; }
-
 
         Projectile[] projectiles;
         Projectile[] IProjectileOwner.Projectiles { get { return projectiles; } }

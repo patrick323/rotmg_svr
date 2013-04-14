@@ -3,448 +3,367 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using wServer.realm;
-using wServer.logic.attack;
-using wServer.logic.movement;
+using wServer.logic.behaviors;
 using wServer.logic.loot;
-using wServer.logic.taunt;
-using wServer.logic.cond;
+using wServer.logic.transitions;
 
 namespace wServer.logic
 {
     partial class BehaviorDb
     {
         static _ GhostKing = Behav()
-            .Init(0x0928, Behaves("Ghost King",
-                    IfExist.Instance(-1,
-                        IfGreater.Instance(-1, 2,
-                            NullBehavior.Instance,
-                            new QueuedBehavior(
-                                Not.Instance(ReturnSpawn.Instance(4)),
-                                False.Instance(SmoothWandering.Instance(1.5f, 3))
-                            )
+            .Init("Ghost King",
+                    new State(
+                        new State("Idle",
+                            new BackAndForth(0.3, 3),
+                            new HpLessTransition(0.99999, "EvaluationStart1")
                         ),
-                        new QueuedBehavior(
-                            AngleMove.Instance(4, 180 * (float)Math.PI / 180, 6),
-                            AngleMove.Instance(4, 0 * (float)Math.PI / 180, 6)
-                        )
-                    ),
-                    new RunBehaviors(
-                        IfEqual.Instance(-1, 1,
-                            new QueuedBehavior(
-                                CooldownExact.Instance(2000),
-                                new SetKey(-1, 2)
-                            )
-                        ),
-                        IfEqual.Instance(-1, 2,
-                            new RunBehaviors(
-                                Once.Instance(UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                                Flashing.Instance(200, 0xff00ff00),
-                                Cooldown.Instance(1000, MultiAttack.Instance(10, 30 * (float)Math.PI / 180, 4)),
-                                new QueuedBehavior(
-                                    CooldownExact.Instance(200),
-                                    SetSize.Instance(120),
-                                    CooldownExact.Instance(200),
-                                    SetSize.Instance(140),
-                                    CooldownExact.Instance(3000),
-                                    new SetKey(-1, 3)
-                                )
-                            )
-                        ),
-                        IfEqual.Instance(-1, 3,
-                            new RunBehaviors(
-                                new SetKey(-1, 4),
-                                Once.Instance(new RunBehaviors(
-                                    Once.Instance(SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                                    new SimpleTaunt("Aye, let's be miserable together"),
-                                    DamageLesserEqual.Instance(4500,
-                                        new RunBehaviors(
-                                            new SimpleTaunt("Just you? I guess I don't have any friends to play with."),
-                                            new SetKey(-2, 0)
-                                        ),
-                                        DamageLesserEqual.Instance(14400,
-                                            new RunBehaviors(
-                                                new SimpleTaunt("Such a small party."),
-                                                new SetKey(-2, 1)
-                                            ),
-                                            DamageLesserEqual.Instance(37500,
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("There's a MOB of you."),
-                                                    new SetKey(-2, 2)
-                                                ),
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("What a HUGE MOB!"),
-                                                    new SetKey(-2, 3)
-                                                )
-                                            )
-                                        )
-                                    )
-                                ))
-                            )
-                        ),
-                        IfEqual.Instance(-2, 0,     //Being alone
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x0929),
-                                TossEnemy.Instance(72 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(144 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(216 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(288 * (float)Math.PI / 180, 5, 0x092a),
-                                CooldownExact.Instance(3000),
-                                new Transmute(0x092d)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 1,     //Partying
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x092b),
-                                TossEnemy.Instance(72 * (float)Math.PI / 180, 5, 0x092b),
-                                TossEnemy.Instance(144 * (float)Math.PI / 180, 5, 0x092b),
-                                TossEnemy.Instance(216 * (float)Math.PI / 180, 5, 0x092b),
-                                TossEnemy.Instance(288 * (float)Math.PI / 180, 5, 0x092b),
-
-                                CooldownExact.Instance(5000),
-                                EntityGroupLesserThan.Instance(15, 2, "Ghosts"),
-                                CooldownExact.Instance(3000),
-                                new SimpleTaunt("Misery loves company!"),
-                                new SetKey(-2, 4)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 2,     //A mob
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x092a),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-
-                                CooldownExact.Instance(5000),
-                                EntityGroupLesserThan.Instance(15, 2, "Ghosts"),
-                                CooldownExact.Instance(3000),
-                                new SimpleTaunt("Misery loves company!"),
-                                new SetKey(-2, 5)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 3,     //Huge MOB
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x092a),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-
-                                CooldownExact.Instance(5000),
-                                EntityGroupLesserThan.Instance(15, 2, "Ghosts"),
-                                CooldownExact.Instance(3000),
-                                new SimpleTaunt("I feel almost manic!"),
-                                new SetKey(-2, 6)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 4,     //Misery 1
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x0929),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-                                CooldownExact.Instance(3000),
-
-                                new Transmute(0x092d)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 5,     //Misery 2
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x0929),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-                                CooldownExact.Instance(1000),
-
-                                TossEnemy.Instance(0, 5, 0x092c),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-                                CooldownExact.Instance(3000),
-
-                                new Transmute(0x092d)
-                            )
-                        ),
-                        IfEqual.Instance(-2, 6,     //Manic
-                            new QueuedBehavior(
-                                TossEnemy.Instance(0, 5, 0x092a),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092a),
-                                CooldownExact.Instance(1000),
-
-                                TossEnemy.Instance(0, 5, 0x0929),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092a),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-                                CooldownExact.Instance(1000),
-
-                                TossEnemy.Instance(0, 5, 0x092c),
-                                TossEnemy.Instance(60 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(120 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(180 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(240 * (float)Math.PI / 180, 5, 0x092c),
-                                TossEnemy.Instance(300 * (float)Math.PI / 180, 5, 0x092c),
-                                CooldownExact.Instance(3000),
-
-                                new Transmute(0x092d)
-                            )
-                        )
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new OnHit(
-                            Once.Instance(
-                                new RunBehaviors(
-                                    new SimpleTaunt("No corporeal creature can kill my sorrow"),
-                                    new SetKey(-1, 1),
-                                    SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)
-                                )
-                            )
-                        )
-                    }
-                ))
-            .Init(0x092d, Behaves("Actual Ghost King",
-                    IfExist.Instance(-1,
-                        new RunBehaviors(
-                            Once.Instance(UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                            new QueuedBehavior(
-                                AngleMove.Instance(4, 180 * (float)Math.PI / 180, 6),
-                                AngleMove.Instance(4, 0 * (float)Math.PI / 180, 6)
+                        new State("EvaluationStart1",
+                            new Taunt("No corporeal creature can kill my sorrow"),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Prioritize(
+                                new StayCloseToSpawn(0.4, range: 3),
+                                new Wander(0.4)
                             ),
-                            Flashing.Instance(1000, 0xff000000)
+                            new TimedTransition(2500, "EvaluationStart2")
                         ),
-                        new RunBehaviors(
-                            Once.Instance(SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable)),
-                            SetSize.Instance(140),
-                            Flashing.Instance(1000, 0xff00ff00),
-                            new QueuedBehavior(
-                                Timed.Instance(1000, False.Instance(
-                                    If.Instance(
-                                        WithinSpawn.Instance(15),
-                                        Chasing.Instance(4f, 10, 0, null),
-                                        ReturnSpawn.Instance(4f)
-                                    )
-                                )),
-                                SimpleAttack.Instance(10)
+                        new State("EvaluationStart2",
+                            new Flash(0x0000ff, 0.1, 60),
+                            new ChangeSize(20, 140),
+
+                            new Shoot(10, count: 4, shootAngle: 30, defaultAngle: 0, coolDown: 1000),
+                            new Prioritize(
+                                new StayCloseToSpawn(0.4, range: 3),
+                                new Wander(0.4)
                             ),
-                            new RandomTaunt(0.0001, "I cannot be defeated while my loyal subjects sustain me!")
+                            new HpLessTransition(0.87, "EvaluationEnd"),
+                            new TimedTransition(6000, "EvaluationEnd")
+                        ),
+                        new State("EvaluationEnd",
+                            new Taunt(0.5, "Aye, let's be miserable together"),
+                            new HpLessTransition(0.875, "HugeMob"),
+                            new HpLessTransition(0.952, "Mob"),
+                            new HpLessTransition(0.985, "SmallGroup"),
+                            new HpLessTransition(0.99999, "Solo")
+                        ),
+                        new State("HugeMob",
+                            new Taunt("What a HUGE MOB!"),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0x00ff00, 0.2, 300),
+                            new TossObject("Small Ghost", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 60, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 120, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 240, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 300, coolDown: 100000),
+                            new TimedTransition(30000, "HugeMob2")
+                        ),
+                        new State("HugeMob2",
+                            new Taunt("I feel almost manic!"),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0x00ff00, 0.2, 300),
+                            new TossObject("Small Ghost", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 60, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 120, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 240, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 300, coolDown: 100000),
+                            new TimedTransition(30000, "Company")
+                        ),
+                        new State("Mob",
+                            new Taunt("There's a MOB of you."),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0x00ff00, 0.2, 300),
+                            new TossObject("Small Ghost", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 60, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 120, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 240, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 300, coolDown: 100000),
+                            new TimedTransition(30000, "Company")
+                        ),
+                        new State("Company",
+                            new Taunt("Misery loves company!"),
+                            new TossObject("Ghost Master", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 60, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 120, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 240, coolDown: 100000),
+                            new TossObject("Large Ghost", range: 4, angle: 300, coolDown: 100000),
+                            new TimedTransition(2000, "Wait")
+                        ),
+                        new State("SmallGroup",
+                            new Taunt("Such a small party."),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0x00ff00, 0.2, 300),
+                            new TossObject("Small Ghost", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 60, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 120, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 240, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 300, coolDown: 100000),
+                            new TimedTransition(30000, "SmallGroup2")
+                        ),
+                        new State("SmallGroup2",
+                            new Taunt("Misery loves company!"),
+                            new TossObject("Ghost Master", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 60, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 120, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 180, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 240, coolDown: 100000),
+                            new TossObject("Medium Ghost", range: 4, angle: 300, coolDown: 100000),
+                            new TimedTransition(2000, "Wait")
+                        ),
+                        new State("Solo",
+                            new Taunt("Just you?  I guess you don't have any friends to play with."),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0x00ff00, 0.2, 10),
+                            new TossObject("Ghost Master", range: 4, angle: 0, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 70, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 140, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 210, coolDown: 100000),
+                            new TossObject("Small Ghost", range: 4, angle: 280, coolDown: 100000),
+                            new TimedTransition(1000, "Wait")
+                        ),
+                        new State("Wait",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0x00ff00, 0.2, 10000),
+                            new Prioritize(
+                                new StayCloseToSpawn(1, range: 8),
+                                new Follow(0.6, range: 2, duration: 2000, coolDown: 2000)
+                            ),
+                            new Shoot(10, coolDown: 1000),
+                            new State("Speak",
+                                new Taunt("I cannot be defeated while my loyal subjects sustain me!"),
+                                new TimedTransition(1000, "Quiet")
+                            ),
+                            new State("Quiet",
+                                new TimedTransition(22000, "Speak")
+                            ),
+                            new TimedTransition(140000, "Overly_long_combat")
+                        ),
+                        new State("Overly_long_combat",
+                            new Taunt("You have sapped my energy. A curse on you!"),
+                            new Prioritize(
+                                new StayCloseToSpawn(1, range: 8),
+                                new Follow(0.6, range: 2, duration: 2000, coolDown: 2000)
+                            ),
+                            new Shoot(10, coolDown: 1000),
+                            new Order(30, "Ghost Master", "Decay"),
+                            new Order(30, "Small Ghost", "Decay"),
+                            new Order(30, "Medium Ghost", "Decay"),
+                            new Order(30, "Large Ghost", "Decay"),
+                            new Transform("Actual Ghost King")
+                        ),
+                        new State("Killed",
+                            new Taunt("I feel my flesh again! For the first time in a 1000 years I LIVE!"),
+                            new Taunt(0.5, "Will you release me?"),
+                            new Transform("Actual Ghost King")
                         )
                     )
-                ))
-
-            .Init(0x092a, Behaves("Small Ghost",
-                    new QueuedBehavior(
-                        SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                        Timed.Instance(1500, False.Instance(
-                            IfNot.Instance(
-                                ChasingGroup.Instance(20, 50, 15, "Heros"),
-                                SimpleWandering.Instance(20, 3f)
-                            )
-                        )),
-                        UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                        Timed.Instance(5000, False.Instance(
-                            new RunBehaviors(
-                                Cooldown.Instance(1000, Rand.Instance(
-                                    new RandomTaunt(0.01, "Switch!"),
-                                    new RandomTaunt(0.01, "Save the King's Soul!")
-                                )),
-                                Cooldown.Instance(250, RingAttack.Instance(4))
-                            )
-                        ))
-                    ),
-                    new QueuedBehavior(
-                        Timed.Instance(3000, Flashing.Instance(500, 0xff00ff00)),
-                        False.Instance(NullBehavior.Instance)
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new DeathTransmute(0x092b)
-                    }
-                ))
-            .Init(0x092b, Behaves("Medium Ghost",
-                    new RunBehaviors(
-                        new QueuedBehavior(
-                            SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                            SetSize.Instance(120),
-                            CooldownExact.Instance(200),
-                            SetSize.Instance(140),
-                            CooldownExact.Instance(200),
-                            False.Instance(new QueuedBehavior(
-                                SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(1500, False.Instance(
-                                    IfNot.Instance(
-                                        ChasingGroup.Instance(20, 50, 15, "Heros"),
-                                        SimpleWandering.Instance(20, 3f)
-                                    )
-                                )),
-                                UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(5000, False.Instance(
-                                    new RunBehaviors(
-                                        Cooldown.Instance(1000, new RandomTaunt(0.01, "I come back more powerful than you could ever imagine")),
-                                        Cooldown.Instance(250, RingAttack.Instance(4, offset: 45 * (float)Math.PI / 180))
-                                    )
-                                ))
-                            ))
-                        ),
-                        new QueuedBehavior(
-                            Timed.Instance(3000, Flashing.Instance(500, 0xff00ff00)),
-                            False.Instance(NullBehavior.Instance)
-                        )
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new DeathTransmute(0x092c)
-                    }
-                ))
-            .Init(0x092c, Behaves("Large Ghost",
-                    new RunBehaviors(
-                        new QueuedBehavior(
-                            SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                            SetSize.Instance(160),
-                            CooldownExact.Instance(200),
-                            SetSize.Instance(180),
-                            CooldownExact.Instance(200),
-                            False.Instance(new QueuedBehavior(
-                                SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(1500, False.Instance(
-                                    IfNot.Instance(
-                                        ChasingGroup.Instance(20, 50, 15, "Heros"),
-                                        SimpleWandering.Instance(20, 3f)
-                                    )
-                                )),
-                                UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(5000, False.Instance(
-                                    new RunBehaviors(
-                                        Cooldown.Instance(1000, new RandomTaunt(0.01, "Only the Secret Ghost Master can kill the King")),
-                                        Cooldown.Instance(250, RingAttack.Instance(8))
-                                    )
-                                ))
-                            ))
-                        ),
-                        new QueuedBehavior(
-                            Timed.Instance(3000, Flashing.Instance(500, 0xff00ff00)),
-                            False.Instance(NullBehavior.Instance)
-                        )
-                    ),
-                    condBehaviors: new ConditionalBehavior[]
-                    {
-                        new OnDeath(
-                            If.Instance(
-                                IsEntityNotPresent.Instance(15, 0x092d),
-                                new Transmute(0x669, 2, 2)
-                            )
-                        )
-                    }
-                ))
-            .Init(0x0929, Behaves("Ghost Master",
-                    IfExist.Instance(-1,
-                        IfEqual.Instance(-1, 0,
-                            new RunBehaviors(     //Medium
-                                HpLesser.Instance(100000 - 1000 - 4000,
-                                    new SetKey(-1, 1)
+                )
+            .Init("Ghost Master",
+                    new State(
+                        new State("Attack1",
+                            new State("NewLocation1",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Flash(0xff00ff00, 0.2, 10),
+                                new Prioritize(
+                                    new StayCloseToSpawn(2, range: 7),
+                                    new Wander(2)
                                 ),
-                                new QueuedBehavior(
-                                    SetSize.Instance(120),
-                                    CooldownExact.Instance(200),
-                                    SetSize.Instance(140),
-                                    CooldownExact.Instance(200),
-                                    Timed.Instance(3000, Flashing.Instance(500, 0xff00ff00)),
-                                    False.Instance(NullBehavior.Instance)
-                                ),
-                                new QueuedBehavior(
-                                    SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                    Timed.Instance(1500, False.Instance(
-                                        IfNot.Instance(
-                                            ChasingGroup.Instance(20, 50, 15, "Heros"),
-                                            SimpleWandering.Instance(20, 3f)
-                                        )
-                                    )),
-                                    UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                    Timed.Instance(5000, False.Instance(Cooldown.Instance(250, RingAttack.Instance(4, offset: 45 * (float)Math.PI / 180))))
-                                )
+                                new TimedTransition(1000, "Att1")
                             ),
-                            IfEqual.Instance(-1, 1,
-                                new RunBehaviors(     //Large
-                                    HpLesser.Instance(100000 - 1000 - 4000 - 8000,
-                                        new SetKey(-1, 2)
-                                    ),
-                                    new QueuedBehavior(
-                                        SetSize.Instance(160),
-                                        CooldownExact.Instance(200),
-                                        SetSize.Instance(180),
-                                        CooldownExact.Instance(200),
-                                        Timed.Instance(3000, Flashing.Instance(500, 0xff00ff00)),
-                                        False.Instance(NullBehavior.Instance)
-                                    ),
-                                    new QueuedBehavior(
-                                        SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                        Timed.Instance(1500, False.Instance(
-                                            IfNot.Instance(
-                                                ChasingGroup.Instance(20, 50, 15, "Heros"),
-                                                SimpleWandering.Instance(20, 3f)
-                                            )
-                                        )),
-                                        UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                        Timed.Instance(5000, False.Instance(Cooldown.Instance(250, RingAttack.Instance(8))))
-                                    )
-                                ),
-                                new QueuedBehavior(     //Death
-                                    new SimpleTaunt("Your secret soul master is dying, Your Majesty"),
-                                    OrderEntity.Instance(20, 0x092d,
-                                        new RunBehaviors(
-                                            Rand.Instance(
-                                                new RunBehaviors(
-                                                    new SimpleTaunt("I feel my flesh again! For the first time in a 1000 years I LIVE!"),
-                                                    new SimpleTaunt("Will you release me?")
-                                                ),
-                                                new SimpleTaunt("You have sapped my energy. A curse on you!")
-                                            ),
-                                            new SimpleTaunt("I am still very alone"),
-                                            SetSize.Instance(100),
-                                            new SetKey(-1, 0)
-                                        )
-                                    ),
-                                    CooldownExact.Instance(2000),
-                                    new SimpleTaunt("I cannot live with my betrayal..."),
-                                    RingAttack.Instance(8),
-                                    Die.Instance
-                                )
-                            )
+                            new State("Att1",
+                                new Shoot(10, count: 4, shootAngle: 90, fixedAngle: 0, coolDown: 400),
+                                new TimedTransition(9000, "NewLocation1")
+                            ),
+                            new HpLessTransition(0.99, "Attack2")
                         ),
-                        new RunBehaviors(     //Small
-                            HpLesser.Instance(100000 - 1000,
-                                new SetKey(-1, 0)
+                        new State("Attack2",
+                            new State("Intro",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Flash(0xff00ff00, 0.2, 10),
+                                new ChangeSize(20, 140),
+                                new TimedTransition(1000, "NewLocation2")
                             ),
-                            new QueuedBehavior(
-                                Timed.Instance(3000, Flashing.Instance(500, 0xff00ff00)),
-                                False.Instance(NullBehavior.Instance)
+                            new State("NewLocation2",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Flash(0xff00ff00, 0.2, 10),
+                                new Prioritize(
+                                    new StayCloseToSpawn(2, range: 7),
+                                    new Wander(2)
+                                ),
+                                new TimedTransition(1000, "Att2")
                             ),
-                            new QueuedBehavior(
-                                SetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(1500, False.Instance(
-                                    IfNot.Instance(
-                                        ChasingGroup.Instance(20, 50, 15, "Heros"),
-                                        SimpleWandering.Instance(20, 3f)
-                                    )
-                                )),
-                                UnsetConditionEffect.Instance(ConditionEffectIndex.Invulnerable),
-                                Timed.Instance(5000, False.Instance(Cooldown.Instance(250, RingAttack.Instance(4))))
-                            )
+                            new State("Att2",
+                                new Shoot(10, count: 4, shootAngle: 90, fixedAngle: 45, coolDown: 400),
+                                new TimedTransition(6000, "NewLocation2")
+                            ),
+                            new HpLessTransition(0.98, "Attack3")
+                        ),
+                        new State("Attack3",
+                            new State("Intro",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Flash(0xff00ff00, 0.2, 10),
+                                new ChangeSize(20, 180),
+                                new TimedTransition(1000, "NewLocation3")
+                            ),
+                            new State("NewLocation3",
+                                new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                                new Flash(0xff00ff00, 0.2, 10),
+                                new Prioritize(
+                                    new StayCloseToSpawn(2, range: 7),
+                                    new Wander(2)
+                                ),
+                                new TimedTransition(1000, "Att3")
+                            ),
+                            new State("Att3",
+                                new Shoot(10, count: 4, shootAngle: 90, fixedAngle: 22.5, coolDown: 400),
+                                new TimedTransition(3000, "NewLocation3")
+                            ),
+                            new HpLessTransition(0.94, "KillKing")
+                        ),
+                        new State("KillKing",
+                            new Taunt("Your secret soul master is dying, Your Majesty"),
+                            new Order(30, "Ghost King", "Killed"),
+                            new TimedTransition(3000, "Suicide")
+                        ),
+                        new State("Suicide",
+                            new Taunt("I cannot live with my betrayal..."),
+                            new Shoot(0, count: 8, shootAngle: 45, fixedAngle: 22.5),
+                            new Decay(0)
+                        ),
+                        new State("Decay",
+                            new Decay(0)
                         )
-                    )
-                ));
+                    ),
+                    new ItemLoot("Purple Drake Egg", 0.03),
+                    new ItemLoot("White Drake Egg", 0.001),
+                    new ItemLoot("Tincture of Dexterity", 0.02)
+                )
+            .Init("Actual Ghost King",
+                    new State(
+                        new Taunt(0.9, "I am still so very alone"),
+                        new ChangeSize(-20, 95),
+                        new Flash(0xff000000, 0.4, 100),
+                        new BackAndForth(0.5, distance: 3)
+                    ),
+                    new TierLoot(2, ItemType.Ring, 0.25),
+                    new TierLoot(3, ItemType.Ring, 0.08),
+                    new TierLoot(7, ItemType.Weapon, 0.3),
+                    new TierLoot(8, ItemType.Weapon, 0.1),
+                    new TierLoot(7, ItemType.Armor, 0.3),
+                    new TierLoot(8, ItemType.Armor, 0.1),
+                    new TierLoot(2, ItemType.Ability, 0.7),
+                    new TierLoot(3, ItemType.Ability, 0.16),
+                    new TierLoot(4, ItemType.Ability, 0.02),
+                    new ItemLoot("Health Potion", 0.7),
+                    new ItemLoot("Magic Potion", 0.7)
+                )
+            .Init("Small Ghost",
+                    new State(
+                        new TransformOnDeath("Medium Ghost"),
+                        new State("NewLocation",
+                            new Taunt(0.1, "Switch!"),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0xff00ff00, 0.2, 10),
+                            new Prioritize(
+                                new StayCloseToSpawn(2, range: 7),
+                                new Wander(2)
+                            ),
+                            new TimedTransition(1000, "Attack")
+                        ),
+                        new State("Attack",
+                            new Taunt(0.1, "Save the King's Soul!"),
+                            new Shoot(10, count: 4, shootAngle: 90, fixedAngle: 0, coolDown: 400),
+                            new TimedTransition(9000, "NewLocation")
+                        ),
+                        new State("Decay",
+                            new Decay(0)
+                        ),
+                        new Decay(160000)
+                    ),
+                    new ItemLoot("Magic Potion", 0.02),
+                    new ItemLoot("Ring of Magic", 0.02),
+                    new ItemLoot("Ring of Attack", 0.02)
+                )
+            .Init("Medium Ghost",
+                    new State(
+                        new TransformOnDeath("Large Ghost"),
+                        new State("Intro",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0xff00ff00, 0.2, 10),
+                            new ChangeSize(20, 140),
+                            new TimedTransition(1000, "NewLocation")
+                        ),
+                        new State("NewLocation",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0xff00ff00, 0.2, 10),
+                            new Prioritize(
+                                new StayCloseToSpawn(2, range: 7),
+                                new Wander(2)
+                            ),
+                            new TimedTransition(1000, "Attack")
+                        ),
+                        new State("Attack",
+                            new Taunt(0.02, "I come back more powerful than you could ever imagine"),
+                            new Shoot(10, count: 4, shootAngle: 90, fixedAngle: 45, coolDown: 800),
+                            new TimedTransition(6000, "NewLocation")
+                        ),
+                        new State("Decay",
+                            new Decay(0)
+                        ),
+                        new Decay(160000)
+                    ),
+                    new ItemLoot("Magic Potion", 0.02),
+                    new ItemLoot("Ring of Speed", 0.02),
+                    new ItemLoot("Ring of Attack", 0.02),
+                    new ItemLoot("Iron Quiver", 0.02)
+                )
+            .Init("Large Ghost",
+                    new State(
+                        new State("Intro",
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0xff00ff00, 0.2, 10),
+                            new ChangeSize(20, 180),
+                            new TimedTransition(1000, "NewLocation")
+                        ),
+                        new State("NewLocation",
+                            new Taunt(0.01,
+                                "The Ghost King protects this sacred ground",
+                                "The Ghost King gave his heart to the Ghost Master.  He cannot die.",
+                                "Only the Secret Ghost Master can kill the King."),
+                            new ConditionalEffect(ConditionEffectIndex.Invulnerable),
+                            new Flash(0xff00ff00, 0.2, 10),
+                            new Prioritize(
+                                new StayCloseToSpawn(2, range: 7),
+                                new Wander(2)
+                            ),
+                            new TimedTransition(1000, "Attack")
+                        ),
+                        new State("Attack",
+                            new Taunt(0.01, "The King's wife died here.  For her memory."),
+                            new Shoot(10, count: 8, shootAngle: 45, fixedAngle: 22.5, coolDown: 800),
+                            new TimedTransition(3000, "NewLocation"),
+                            new EntityNotExistsTransition("Ghost King", 30, "AttackKingGone")
+                        ),
+                        new State("AttackKingGone",
+                            new Taunt(0.01, "The King's wife died here.  For her memory."),
+                            new Shoot(10, count: 8, shootAngle: 45, fixedAngle: 22.5, coolDown: 800, coolDownOffset: 800),
+                            new TransformOnDeath("Imp", min: 2, max: 3),
+                            new TimedTransition(3000, "NewLocation")
+                        ),
+                        new State("Decay",
+                            new Decay(0)
+                        ),
+                        new Decay(160000)
+                    ),
+                    new ItemLoot("Magic Potion", 0.02),
+                    new ItemLoot("Tincture of Defense", 0.02),
+                    new ItemLoot("Blue Drake Egg", 0.02),
+                    new ItemLoot("Yellow Drake Egg", 0.02)
+                )
+                ;
     }
 }

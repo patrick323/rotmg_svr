@@ -48,9 +48,14 @@ namespace wServer.realm.entities
                     Effect = ConditionEffectIndex.StasisImmune,
                     DurationMS = -1
                 });
-            foreach (var i in CondBehaviors)
-                if ((i.Condition & BehaviorCondition.OnSpawn) != 0)
-                    i.Behave(BehaviorCondition.OnSpawn, this, null, null);
+        }
+
+        public void Death(RealmTime time)
+        {
+            counter.Death(time);
+            if (CurrentState != null)
+                CurrentState.OnDeath(new BehaviorEventArgs(this, time));
+            Owner.LeaveWorld(this);
         }
 
         public int Damage(Player from, RealmTime time, int dmg, bool noDef, params ConditionEffect[] effs)
@@ -81,19 +86,11 @@ namespace wServer.realm.entities
                     ObjectId = from.Id
                 }, null);
 
-                foreach (var i in CondBehaviors)
-                    if ((i.Condition & BehaviorCondition.OnHit) != 0)
-                        i.Behave(BehaviorCondition.OnHit, this, time, null);
-                counter.HitBy(from, null, dmg);
+                counter.HitBy(from, time, null, dmg);
 
-                if (HP < 0)
+                if (HP < 0 && Owner != null)
                 {
-                    foreach (var i in CondBehaviors)
-                        if ((i.Condition & BehaviorCondition.OnDeath) != 0)
-                            i.Behave(BehaviorCondition.OnDeath, this, time, counter);
-                    counter.Death();
-                    if (Owner != null)
-                        Owner.LeaveWorld(this);
+                    Death(time);
                 }
 
                 UpdateCount++;
@@ -127,19 +124,11 @@ namespace wServer.realm.entities
                     ObjectId = projectile.ProjectileOwner.Self.Id
                 }, projectile.ProjectileOwner as Player);
 
-                foreach (var i in CondBehaviors)
-                    if ((i.Condition & BehaviorCondition.OnHit) != 0)
-                        i.Behave(BehaviorCondition.OnHit, this, time, projectile);
-                counter.HitBy(projectile.ProjectileOwner as Player, projectile, dmg);
+                counter.HitBy(projectile.ProjectileOwner as Player, time, projectile, dmg);
 
-                if (HP < 0)
+                if (HP < 0 && Owner != null)
                 {
-                    foreach (var i in CondBehaviors)
-                        if ((i.Condition & BehaviorCondition.OnDeath) != 0)
-                            i.Behave(BehaviorCondition.OnDeath, this, time, counter);
-                    counter.Death();
-                    if (Owner != null)
-                        Owner.LeaveWorld(this);
+                    Death(time);
                 }
                 UpdateCount++;
                 return true;

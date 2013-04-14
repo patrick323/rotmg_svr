@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.logic.loot;
 using terrain;
 
 namespace wServer.realm.setpieces

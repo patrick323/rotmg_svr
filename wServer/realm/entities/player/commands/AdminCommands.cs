@@ -9,8 +9,6 @@ using wServer.realm.worlds;
 
 namespace wServer.realm.entities.player.commands
 {
-
-
     class SpawnCommand : ICommand
     {
         public string Command { get { return "spawn"; } }
@@ -228,9 +226,7 @@ namespace wServer.realm.entities.player.commands
                 : base(0x0d5d)
             {
                 this.player = player;
-                MovementBehavior = wServer.logic.NullBehavior.Instance;
-                AttackBehavior = wServer.logic.NullBehavior.Instance;
-                ReproduceBehavior = wServer.logic.NullBehavior.Instance;
+                SwitchTo(logic.State.NullState);
                 ApplyConditionEffect(new ConditionEffect()
                 {
                     Effect = ConditionEffectIndex.Invincible,
@@ -250,6 +246,32 @@ namespace wServer.realm.entities.player.commands
             player.Owner.EnterWorld(new Locater(player));
         }
     }
+
+    class AllOnlineCommand : ICommand
+    {
+        public string Command { get { return "online"; } }
+        public bool RequirePerm { get { return true; } }
+
+        public void Execute(Player player, string[] args)
+        {
+            StringBuilder sb = new StringBuilder("Users online: \r\n");
+            var copy = RealmManager.Clients.Values.ToArray();
+            for (int i = 0; i < copy.Length; i++)
+            {
+                if (copy[i].Stage == ProtocalStage.Disconnected) continue;
+                sb.AppendFormat("{0}@{1}\r\n", copy[i].Account.Name, copy[i].Socket.RemoteEndPoint.ToString());
+            }
+
+            player.Client.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "",
+                Text = sb.ToString()
+            });
+        }
+    }
+
     class KillAll : ICommand
     {
         public string Command { get { return "killall"; } }
@@ -258,17 +280,17 @@ namespace wServer.realm.entities.player.commands
         public void Execute(Player player, string[] args)
         {
             try
-            {                
-                 foreach (var i in player.Owner.Enemies)
-                    {                        
-                        if ((i.Value.ObjectDesc != null )&&                              
-                            (i.Value.ObjectDesc.ObjectId != null ) &&
-                            (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
-                        {                        
-                          // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
-                           i.Value.Owner.LeaveWorld(i.Value);
-                        }
-                 }
+            {
+                foreach (var i in player.Owner.Enemies)
+                {
+                    if ((i.Value.ObjectDesc != null) &&
+                        (i.Value.ObjectDesc.ObjectId != null) &&
+                        (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
+                    {
+                        // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
+                        i.Value.Owner.LeaveWorld(i.Value);
+                    }
+                }
             }
             catch
             {
@@ -278,7 +300,7 @@ namespace wServer.realm.entities.player.commands
                     Stars = -1,
                     Name = "",
                     Text = "Cannot killall!"
-                });                
+                });
             }
         }
     }
@@ -315,7 +337,6 @@ namespace wServer.realm.entities.player.commands
             }
         }
     }
-
 
     class Kick : ICommand
     {
@@ -366,7 +387,7 @@ namespace wServer.realm.entities.player.commands
     {
         public string Command { get { return "getquest"; } }
         public bool RequirePerm { get { return true; } }
-        
+
         public void Execute(Player player, string[] args)
         {
             try
@@ -392,10 +413,10 @@ namespace wServer.realm.entities.player.commands
         }
     }
 
-     class OryxSay : ICommand
+    class OryxSay : ICommand
     {
         public string Command { get { return "oryxsay"; } }
-        public bool RequirePerm { get { return true; } }     
+        public bool RequirePerm { get { return true; } }
 
         public void Execute(Player player, string[] args)
         {
@@ -427,54 +448,72 @@ namespace wServer.realm.entities.player.commands
         }
     }
 
-     class ListCommands : ICommand
-     {
-         public string Command { get { return "commands"; } }
-         public bool RequirePerm { get { return true; } }
+    class ListCommands : ICommand
+    {
+        public string Command { get { return "commands"; } }
+        public bool RequirePerm { get { return true; } }
 
-         public void Execute(Player player, string[] args)
-         {
-             try
-             {
-                     Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
-                             var t = typeof(ICommand);
-                             foreach (var i in t.Assembly.GetTypes())
-                                 if (t.IsAssignableFrom(i) && i != t)
-                                 {
-                                     var instance = (ICommand)Activator.CreateInstance(i);
-                                     cmds.Add(instance.Command, instance);
-                                 }                         
+        public void Execute(Player player, string[] args)
+        {
+            try
+            {
+                Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
+                var t = typeof(ICommand);
+                foreach (var i in t.Assembly.GetTypes())
+                    if (t.IsAssignableFrom(i) && i != t)
+                    {
+                        var instance = (ICommand)Activator.CreateInstance(i);
+                        cmds.Add(instance.Command, instance);
+                    }
 
-                 StringBuilder sb = new StringBuilder("Commands: ");
-                 var copy = cmds.Values.ToArray();
-                 for (int i = 0; i < copy.Length; i++)
-                 {
-                     if (i != 0) sb.Append(", ");
-                     sb.Append(copy[i].Command);
-                 }
+                StringBuilder sb = new StringBuilder("Commands: ");
+                var copy = cmds.Values.ToArray();
+                for (int i = 0; i < copy.Length; i++)
+                {
+                    if (i != 0) sb.Append(", ");
+                    sb.Append(copy[i].Command);
+                }
 
-                 player.Client.SendPacket(new TextPacket()
-                 {
-                     BubbleTime = 0,
-                     Stars = -1,
-                     Name = "",
-                     Text = sb.ToString()
-                 });
-             }
-             catch
-             {
-                 player.Client.SendPacket(new TextPacket()
-                 {
-                     BubbleTime = 0,
-                     Stars = -1,
-                     Name = "",
-                     Text = "Cannot say that!"
-                 });
-             }
-         }
-     }
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = sb.ToString()
+                });
+            }
+            catch
+            {
+                player.Client.SendPacket(new TextPacket()
+                {
+                    BubbleTime = 0,
+                    Stars = -1,
+                    Name = "",
+                    Text = "Cannot say that!"
+                });
+            }
+        }
+    }
 
-    class SWhoCommand : ICommand //get all players from all worlds (this may become too large!)
+    class AltitudeCommands : ICommand
+    {
+        public string Command { get { return "alt"; } }
+        public bool RequirePerm { get { return true; } }
+
+        public void Execute(Player player, string[] args)
+        {
+            var tile = player.Owner.Map[(int)player.X, (int)player.Y];
+            player.Client.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "",
+                Text = tile.Elevation.ToString()
+            });
+        }
+    }
+
+    class SWhoCommand : ICommand
     {
         public string Command { get { return "swho"; } }
         public bool RequirePerm { get { return true; } }
