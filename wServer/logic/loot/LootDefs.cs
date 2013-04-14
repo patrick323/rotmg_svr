@@ -135,7 +135,7 @@ namespace wServer.logic.loot
                     candidates = RingItems[tier];
                     break;
                 case ItemType.Potion:
-                    candidates = RingItems[tier];
+                    candidates = PotionItems[tier];
                     break;
                 default:
                     throw new NotSupportedException(type.ToString());

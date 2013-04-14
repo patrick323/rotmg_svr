@@ -167,6 +167,7 @@
     <Compile Include="logic\db\BehaviorDb.Shore.cs" />
     <Compile Include="logic\db\BehaviorDb.Tutorial.cs" />
     <Compile Include="logic\CycleBehavior.cs" />
+    <Compile Include="logic\db\BehaviorDb.Crystal.cs" />
     <Compile Include="logic\loot\LootDefs.cs" />
     <Compile Include="logic\loot\Loots.cs" />
     <Compile Include="logic\State.cs" />
