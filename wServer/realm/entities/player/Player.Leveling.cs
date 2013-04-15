@@ -208,13 +208,8 @@ namespace wServer.realm.entities
                 UpdateCount++;
 
                 if (Level == 20)
-                    Owner.BroadcastPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = Name + " achieved level 20"
-                    }, null);
+                    foreach (var i in Owner.Players.Values)
+                        i.SendInfo(Name + " achieved level 20");
                 questEntity = null;
                 return true;
             }

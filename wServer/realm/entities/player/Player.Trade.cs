@@ -19,47 +19,23 @@ namespace wServer.realm.entities
         {
             if (!NameChosen)
             {
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Unique name is required to trade with other!"
-                });
+                SendError("Unique name is required to trade with other!");
                 return;
             }
             if (tradeTarget != null)
             {
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "*Error*",
-                    Text = "You're already trading!"
-                });
+                SendError("You're already trading!");
                 return;
             }
             Player target = Owner.GetUniqueNamedPlayer(pkt.Name);
             if (target == null)
             {
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "*Error*",
-                    Text = "Player not found!"
-                });
+                SendError("Player not found!");
                 return;
             }
             if (target.tradeTarget != null && target.tradeTarget != this)
             {
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "*Error*",
-                    Text = target.Name + " is already trading!"
-                });
+                SendError(target.Name + " is already trading!");
                 return;
             }
 
@@ -113,13 +89,7 @@ namespace wServer.realm.entities
                 {
                     Name = Name
                 });
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "You have sent a trade request to " + target.Name + "!"
-                });
+                SendInfo("You have sent a trade request to " + target.Name + "!");
                 return;
             }
         }
@@ -184,13 +154,7 @@ namespace wServer.realm.entities
             {
                 if (i.Item2 < 0)
                 {
-                    i.Item1.psr.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = "Trade to " + Name + " has timed out!"
-                    });
+                    i.Item1.SendInfo("Trade to " + Name + " has timed out!");
                     potentialTrader.Remove(i.Item1);
                 }
                 else potentialTrader[i.Item1] = i.Item2;

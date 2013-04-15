@@ -23,13 +23,9 @@ namespace wServer.realm.entities.player.commands
                 short objType;
                 if (!XmlDatas.IdToType.TryGetValue(name, out objType) ||
                     !XmlDatas.ObjectDescs.ContainsKey(objType))
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = "Unknown entity!"
-                    });
+                {
+                    player.SendError("Unknown entity!");
+                }
                 else
                 {
                     for (int i = 0; i < num; i++)
@@ -46,13 +42,9 @@ namespace wServer.realm.entities.player.commands
                 short objType;
                 if (!XmlDatas.IdToType.TryGetValue(name, out objType) ||
                     !XmlDatas.ObjectDescs.ContainsKey(objType))
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = "Unknown entity!"
-                    });
+                {
+                    player.SendError("Unknown entity!");
+                }
                 else
                 {
                     var entity = Entity.Resolve(objType);
@@ -80,13 +72,7 @@ namespace wServer.realm.entities.player.commands
             }
             catch
             {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Invalid effect!"
-                });
+                player.SendError("Invalid effect!");
             }
         }
     }
@@ -108,13 +94,7 @@ namespace wServer.realm.entities.player.commands
             }
             catch
             {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Invalid effect!"
-                });
+                player.SendError("Invalid effect!");
             }
         }
     }
@@ -130,13 +110,7 @@ namespace wServer.realm.entities.player.commands
             short objType;
             if (!XmlDatas.IdToType.TryGetValue(name, out objType))
             {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Unknown type!"
-                });
+                player.SendError("Unknown item type!");
                 return;
             }
             for (int i = 0; i < player.Inventory.Length; i++)
@@ -164,13 +138,7 @@ namespace wServer.realm.entities.player.commands
             }
             catch
             {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Invalid coordinates!"
-                });
+                player.SendError("Invalid coordinates!");
                 return;
             }
             player.Move(x + 0.5f, y + 0.5f);
@@ -203,13 +171,7 @@ namespace wServer.realm.entities.player.commands
             }
             catch
             {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot apply setpiece!"
-                });
+                player.SendError("Cannot apply setpiece!");
             }
         }
     }
@@ -219,31 +181,8 @@ namespace wServer.realm.entities.player.commands
         public string Command { get { return "debug"; } }
         public bool RequirePerm { get { return true; } }
 
-        class Locater : Enemy
-        {
-            Player player;
-            public Locater(Player player)
-                : base(0x0d5d)
-            {
-                this.player = player;
-                SwitchTo(logic.State.NullState);
-                ApplyConditionEffect(new ConditionEffect()
-                {
-                    Effect = ConditionEffectIndex.Invincible,
-                    DurationMS = -1
-                });
-            }
-            public override void Tick(RealmTime time)
-            {
-                Move(player.X, player.Y);
-                UpdateCount++;
-                base.Tick(time);
-            }
-        }
-
         public void Execute(Player player, string[] args)
         {
-            player.Owner.EnterWorld(new Locater(player));
         }
     }
 
@@ -262,13 +201,7 @@ namespace wServer.realm.entities.player.commands
                 sb.AppendFormat("{0}@{1}\r\n", copy[i].Account.Name, copy[i].Socket.RemoteEndPoint.ToString());
             }
 
-            player.Client.SendPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",
-                Text = sb.ToString()
-            });
+            player.SendInfo(sb.ToString());
         }
     }
 
@@ -279,28 +212,15 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
+            foreach (var i in player.Owner.Enemies)
             {
-                foreach (var i in player.Owner.Enemies)
+                if ((i.Value.ObjectDesc != null) &&
+                    (i.Value.ObjectDesc.ObjectId != null) &&
+                    (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
                 {
-                    if ((i.Value.ObjectDesc != null) &&
-                        (i.Value.ObjectDesc.ObjectId != null) &&
-                        (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
-                    {
-                        // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
-                        i.Value.Owner.LeaveWorld(i.Value);
-                    }
+                    // i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches
+                    i.Value.Owner.LeaveWorld(i.Value);
                 }
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot killall!"
-                });
             }
         }
     }
@@ -312,28 +232,15 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
+            foreach (var i in player.Owner.Enemies)
             {
-                foreach (var i in player.Owner.Enemies)
+                if ((i.Value.ObjectDesc != null) &&
+                    (i.Value.ObjectDesc.ObjectId != null) &&
+                    (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
                 {
-                    if ((i.Value.ObjectDesc != null) &&
-                        (i.Value.ObjectDesc.ObjectId != null) &&
-                        (i.Value.ObjectDesc.ObjectId.Contains(args[0])))
-                    {
-                        i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches, 
-                        //i.Value.Owner.LeaveWorld(i.Value);
-                    }
+                    i.Value.Damage(player, new RealmTime(), 100 * 1000, true); //may not work for ents/liches, 
+                    //i.Value.Owner.LeaveWorld(i.Value);
                 }
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot killall!"
-                });
             }
         }
     }
@@ -345,40 +252,27 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
+            World destworld = RealmManager.GetWorld(World.VAULT_ID);
+            foreach (var w in RealmManager.Worlds)
             {
-                World destworld = RealmManager.GetWorld(World.VAULT_ID);
-                foreach (var w in RealmManager.Worlds)
+                World world = w.Value;
+                if (w.Key != 0)
                 {
-                    World world = w.Value;
-                    if (w.Key != 0)
+                    foreach (var i in world.Players)
                     {
-                        foreach (var i in world.Players)
+                        if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
                         {
-                            if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
-                            {
-                                i.Value.Client.SendPacket(new ReconnectPacket()
-                                      {
-                                          Host = "",
-                                          Port = 2050,
-                                          GameId = destworld.Id,
-                                          Name = destworld.Name,
-                                          Key = Empty<byte>.Array,
-                                      });
-                            }
+                            i.Value.Client.SendPacket(new ReconnectPacket()
+                                  {
+                                      Host = "",
+                                      Port = 2050,
+                                      GameId = destworld.Id,
+                                      Name = destworld.Name,
+                                      Key = Empty<byte>.Array,
+                                  });
                         }
-                    }                                                              
+                    }
                 }
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot kick!"
-                });
             }
         }
     }
@@ -390,26 +284,7 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
-            {
-                player.Owner.BroadcastPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "Quest",
-                    Text = "Loc: " + player.Quest.X + " " + player.Quest.Y
-                }, null);
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot find quest!"
-                });
-            }
+            player.SendInfo("Loc: " + player.Quest.X + " " + player.Quest.Y);
         }
     }
 
@@ -420,31 +295,8 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
-            {
-                string saytext = string.Join(" ", args);
-
-                player.Owner.BroadcastPacket(new TextPacket()
-                {
-                    Name = "#" + "Oryx the Mad God",
-                    ObjectId = 0x0932,
-                    Stars = -1,
-                    BubbleTime = 0,
-                    Recipient = "",
-                    Text = saytext,
-                    CleanText = ""
-                }, null);
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot say that!"
-                });
-            }
+            string saytext = string.Join(" ", args);
+            player.SendEnemy("Oryx the Mad God", saytext);
         }
     }
 
@@ -455,43 +307,24 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
-            {
-                Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
-                var t = typeof(ICommand);
-                foreach (var i in t.Assembly.GetTypes())
-                    if (t.IsAssignableFrom(i) && i != t)
-                    {
-                        var instance = (ICommand)Activator.CreateInstance(i);
-                        cmds.Add(instance.Command, instance);
-                    }
-
-                StringBuilder sb = new StringBuilder("Commands: ");
-                var copy = cmds.Values.ToArray();
-                for (int i = 0; i < copy.Length; i++)
+            Dictionary<string, ICommand> cmds = new Dictionary<string, ICommand>();
+            var t = typeof(ICommand);
+            foreach (var i in t.Assembly.GetTypes())
+                if (t.IsAssignableFrom(i) && i != t)
                 {
-                    if (i != 0) sb.Append(", ");
-                    sb.Append(copy[i].Command);
+                    var instance = (ICommand)Activator.CreateInstance(i);
+                    cmds.Add(instance.Command, instance);
                 }
 
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = sb.ToString()
-                });
-            }
-            catch
+            StringBuilder sb = new StringBuilder("Commands: ");
+            var copy = cmds.Values.ToArray();
+            for (int i = 0; i < copy.Length; i++)
             {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot say that!"
-                });
+                if (i != 0) sb.Append(", ");
+                sb.Append(copy[i].Command);
             }
+
+            player.SendInfo(sb.ToString());
         }
     }
 
@@ -503,50 +336,7 @@ namespace wServer.realm.entities.player.commands
         public void Execute(Player player, string[] args)
         {
             var tile = player.Owner.Map[(int)player.X, (int)player.Y];
-            player.Client.SendPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",
-                Text = tile.Elevation.ToString()
-            });
-        }
-    }
-
-    class SWhoCommand : ICommand
-    {
-        public string Command { get { return "swho"; } }
-        public bool RequirePerm { get { return true; } }
-
-        public void Execute(Player player, string[] args)
-        {
-            StringBuilder sb = new StringBuilder("All conplayers: ");
-
-            foreach (var w in RealmManager.Worlds)
-            {
-                World world = w.Value;
-                if (w.Key != 0)
-                {
-                    var copy = world.Players.Values.ToArray();
-                    if (copy.Length != 0)
-                    {
-                        for (int i = 0; i < copy.Length; i++)
-                        {
-                            sb.Append(copy[i].Name);
-                            sb.Append(", ");
-                        }
-                    }
-                }
-            }
-            string fixedString = sb.ToString().TrimEnd(',', ' '); //clean up trailing ", "s
-
-            player.Client.SendPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",
-                Text = fixedString
-            });
+            player.SendInfo(tile.Elevation.ToString());
         }
     }
 
@@ -557,40 +347,15 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
+            string saytext = string.Join(" ", args);
 
-            try
+            foreach (var w in RealmManager.Worlds)
             {
-                string saytext = string.Join(" ", args);
-
-                foreach (var w in RealmManager.Worlds)
+                World world = w.Value;
+                if (w.Key != 0)
                 {
-                    World world = w.Value;
-                    if (w.Key != 0)
-                    {
-                        world.BroadcastPacket(new TextPacket()
-                        {
-                            Name = "#" + "Announcement",
-                            //ObjectId = 0x0932,
-                            ObjectId = 0x00,
-                            Stars = -1,
-                            BubbleTime = 0,
-                            //Recipient = "", //this makes yellow text
-                            Text = saytext,
-                            CleanText = saytext
-                        }, null);
-                    }
-                }          
-
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot say that in announcement!"
-                });
+                    player.SendText("@Announcement", saytext);
+                }
             }
         }
     }
@@ -602,37 +367,18 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
+            foreach (var i in player.Owner.Players)
             {
-                foreach (var i in player.Owner.Players)
+                if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
                 {
-                    if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
+                    i.Value.Teleport(new RealmTime(), new cliPackets.TeleportPacket()
                     {
-                        i.Value.Teleport(new RealmTime(), new cliPackets.TeleportPacket()
-                        {
-                            ObjectId = player.Id
-                        });
-                        return;
-                    }
+                        ObjectId = player.Id
+                    });
+                    return;
                 }
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = string.Format("Cannot rteleport, {0} not found!", args[0].Trim())
-                });
             }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot rtp!"
-                });
-            }
+            player.SendError(string.Format("Cannot rteleport, {0} not found!", args[0].Trim()));
         }
     }
 
@@ -643,42 +389,23 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
-            {                
-                foreach (var w in RealmManager.Worlds)
+            foreach (var w in RealmManager.Worlds)
+            {
+                World world = w.Value;
+                if (w.Key != 0) // 0 is limbo??
                 {
-                    World world = w.Value;
-                    if (w.Key != 0) // 0 is limbo??
+                    foreach (var i in world.Players)
                     {
-                        foreach (var i in world.Players) 
+                        //Unnamed becomes a problem: skip them
+                        if (i.Value.Name.ToLower() == args[0].ToLower().Trim() && i.Value.NameChosen)
                         {
-                            //Unnamed becomes a problem: skip them
-                            if (i.Value.Name.ToLower() == args[0].ToLower().Trim() && i.Value.NameChosen) 
-                            {
-                                i.Value.Death("Moderator");                                
-                                return;
-                            }
+                            i.Value.Death("Moderator");
+                            return;
                         }
                     }
                 }
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = string.Format("Cannot /kill, {0} not found!", args[0].Trim())
-                });      
             }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot kill!"
-                });
-            }
+            player.SendError(string.Format("Cannot /kill, {0} not found!", args[0].Trim()));
         }
     }
 

@@ -21,7 +21,7 @@ namespace wServer.realm.entities
             else
                 Owner.BroadcastPacket(new TextPacket()
                 {
-                    Name = Name,
+                    Name = (Client.Account.Admin ? "@" : "") + Name,
                     ObjectId = Id,
                     Stars = Stars,
                     BubbleTime = 5,
@@ -29,6 +29,67 @@ namespace wServer.realm.entities
                     Text = pkt.Text,
                     CleanText = pkt.Text
                 }, null);
+        }
+
+        public void SendInfo(string text)
+        {
+            psr.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "",
+                Text = text
+            });
+        }
+        public void SendError(string text)
+        {
+            psr.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "*Error*",
+                Text = text
+            });
+        }
+        public void SendClientText(string text)
+        {
+            psr.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "*Client*",
+                Text = text
+            });
+        }
+        public void SendHelp(string text)
+        {
+            psr.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "*Help*",
+                Text = text
+            });
+        }
+        public void SendEnemy(string name, string text)
+        {
+            psr.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = "#" + name,
+                Text = text
+            });
+        }
+        public void SendText(string sender, string text)
+        {
+            psr.SendPacket(new TextPacket()
+            {
+                BubbleTime = 0,
+                Stars = -1,
+                Name = sender,
+                Text = text
+            });
         }
 
 
@@ -81,13 +142,13 @@ namespace wServer.realm.entities
                 if (command.RequirePerm)
                 {
                     if (this.CmdReqAdmin())
-                    {   
-                    command.Execute(this, args);
+                    {
+                        command.Execute(this, args);
                     }
                 }
                 else
                     command.Execute(this, args);
-                
+
             }
             catch
             {

@@ -588,31 +588,10 @@ namespace wServer.realm
         };
         #endregion
 
-        void SendMsg(Player player, string message, string src = "")
-        {
-            player.Client.SendPacket(new TextPacket()
-            {
-                Name = src,
-                ObjectId = -1,
-                Stars = -1,
-                BubbleTime = 0,
-                Recipient = "",
-                Text = message,
-                CleanText = ""
-            });
-        }
         void BroadcastMsg(string message)
         {
-            world.BroadcastPacket(new TextPacket()
-            {
-                Name = "#Oryx the Mad God",
-                ObjectId = -1,
-                Stars = -1,
-                BubbleTime = 0,
-                Recipient = "",
-                Text = message,
-                CleanText = ""
-            }, null);
+            foreach (var i in world.Players.Values)
+                i.SendEnemy("Oryx the Mad God", message);
         }
 
         void HandleAnnouncements()
@@ -645,10 +624,10 @@ namespace wServer.realm
 
         public void OnPlayerEntered(Player player)
         {
-            SendMsg(player, "Welcome to Realm of the Mad God");
-            SendMsg(player, "You are food for my minions!", "#Oryx the Mad God");
-            SendMsg(player, "Use [WASDQE] to move; click to shoot!");
-            SendMsg(player, "Type \"/help\" for more help");
+            player.SendInfo("Welcome to Realm of the Mad God");
+            player.SendEnemy("Oryx the Mad God", "You are food for my minions!");
+            player.SendInfo("Use [WASDQE] to move; click to shoot!");
+            player.SendInfo("Type \"/help\" for more help");
         }
 
         void SpawnEvent(ISetPiece setpiece)

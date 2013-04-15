@@ -39,13 +39,7 @@ namespace wServer.realm.entities.player.commands
                 sb.Append(copy[i].Name);
             }
 
-            player.Client.SendPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",
-                Text = sb.ToString()
-            });
+            player.SendInfo(sb.ToString());
         }
     }
 
@@ -56,13 +50,7 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            player.Client.SendPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",
-                Text = player.Owner.Name
-            });
+            player.SendInfo(player.Owner.Name);
         }
     }
 
@@ -80,24 +68,12 @@ namespace wServer.realm.entities.player.commands
                     Effect = ConditionEffectIndex.Paused,
                     DurationMS = 0
                 });
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Game resumed."
-                });
+                player.SendInfo("Game resumed.");
             }
             else
             {
                 if (player.Owner.EnemiesCollision.HitTest(player.X, player.Y, 8).OfType<Enemy>().Any())
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "*Error*",
-                        Text = "Not safe to pause."
-                    });
+                    player.SendError("Not safe to pause.");
                 else
                 {
                     player.ApplyConditionEffect(new ConditionEffect()
@@ -105,17 +81,12 @@ namespace wServer.realm.entities.player.commands
                         Effect = ConditionEffectIndex.Paused,
                         DurationMS = -1
                     });
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = "Game paused."
-                    });
+                    player.SendInfo("Game paused.");
                 }
             }
         }
     }
+
     /// <summary>
     /// This introduces a subtle bug, since the client UI is not notified when a /teleport is typed, it's cooldown does not reset.
     /// This leads to the unfortunate situation where the cooldown has been not been reached, but the UI doesn't know. The graphical TP will fail
@@ -126,23 +97,15 @@ namespace wServer.realm.entities.player.commands
         public string Command { get { return "teleport"; } }
         public bool RequirePerm { get { return false; } }
 
-        public void Execute(Player player, string[] args) 
+        public void Execute(Player player, string[] args)
         {
-            try
-            {
                 if (player.Name.ToLower() == args[0].ToLower())
                 {
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = "You are already at yourself, and always will be!"
-                    });
+                    player.SendInfo("You are already at yourself, and always will be!");
                     return;
                 }
 
-                foreach (var i in player.Owner.Players) 
+                foreach (var i in player.Owner.Players)
                 {
                     if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
                     {
@@ -151,29 +114,10 @@ namespace wServer.realm.entities.player.commands
                             ObjectId = i.Value.Id
                         });
                         return;
-                    }                                           
+                    }
                 }
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = string.Format("Cannot teleport, {0} not found!", args[0].Trim())
-                });
-            }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot tp!"
-                });
-            }
+                player.SendInfo(string.Format("Cannot teleport, {0} not found!", args[0].Trim()));
         }
-
-
     }
 
     class TellCommand : ICommand
@@ -183,85 +127,54 @@ namespace wServer.realm.entities.player.commands
 
         public void Execute(Player player, string[] args)
         {
-            try
+            if (!(player.NameChosen))
             {
-                if (!(player.NameChosen))
-                {
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = string.Format("Choose a name!")
-                    });
-                    return;
-                }
+                player.SendError("Choose a name!");
+                return;
+            }
 
-                string playername = args[0].Trim();
+            string playername = args[0].Trim();
 
-                if (player.Name.ToLower() == playername.ToLower())
-                {
-                    player.Client.SendPacket(new TextPacket()
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = string.Format("Quit telling yourself!")
-                    });
-                    return;
-                }
-                
-                string saytext = string.Join(" ", args, 1, args.Length-1);
+            if (player.Name.ToLower() == playername.ToLower())
+            {
+                player.SendError("Quit telling yourself!");
+                return;
+            }
 
-                foreach (var w in RealmManager.Worlds)
+            string saytext = string.Join(" ", args, 1, args.Length - 1);
+
+            foreach (var w in RealmManager.Worlds)
+            {
+                World world = w.Value;
+                if (w.Key != 0) // 0 is limbo??
                 {
-                    World world = w.Value;
-                    if (w.Key != 0) // 0 is limbo??
+                    foreach (var i in world.Players)
                     {
-                        foreach (var i in world.Players) 
+                        if (i.Value.Name.ToLower() == args[0].ToLower().Trim() && i.Value.NameChosen)
                         {
-                            if (i.Value.Name.ToLower() == args[0].ToLower().Trim() && i.Value.NameChosen)
+                            player.Client.SendPacket(new TextPacket() //echo to self
                             {
-                                player.Client.SendPacket(new TextPacket() //echo to self
-                                {
-                                    BubbleTime = 10,
-                                    Stars = player.Stars,          
-                                    Name = player.Name,
-                                    Recipient = i.Value.Name,
-                                    Text = saytext
-                                });
+                                BubbleTime = 10,
+                                Stars = player.Stars,
+                                Name = player.Name,
+                                Recipient = i.Value.Name,
+                                Text = saytext
+                            });
 
-                                i.Value.Client.SendPacket(new TextPacket() //echo to /tell player
-                                {                                    
-                                    BubbleTime = 10,
-                                    Stars = player.Stars,
-                                    Recipient = i.Value.Name,
-                                    Name = player.Name,
-                                    Text = saytext
-                                });
-                                return;
-                            }
+                            i.Value.Client.SendPacket(new TextPacket() //echo to /tell player
+                            {
+                                BubbleTime = 10,
+                                Stars = player.Stars,
+                                Recipient = i.Value.Name,
+                                Name = player.Name,
+                                Text = saytext
+                            });
+                            return;
                         }
                     }
-                }                       
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = string.Format("Cannot /tell, {0} not found!", args[0].Trim())
-                });
+                }
             }
-            catch
-            {
-                player.Client.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Cannot tell!"
-                });
-            }
+            player.SendError("Cannot /tell, {0} not found!");
         }
     }
 }

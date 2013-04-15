@@ -369,7 +369,7 @@ namespace wServer.realm.entities
                                 world = RealmManager.GetWorld(World.NEXUS_ID);
                         } break;
                     case 0x0712:
-                        world = RealmManager.GetWorld(World.VAULT_ID); break; 
+                        world = RealmManager.GetWorld(World.VAULT_ID); break;
                     case 0x071d:
                         world = RealmManager.GetWorld(World.NEXUS_ID); break;
                     case 0x071c:
@@ -381,21 +381,15 @@ namespace wServer.realm.entities
                     case 0x071f: //these need to match IDs
                         //world = RealmManager.GetWorld(World.GauntletMap); break; //this creates a singleton dungeon
                         world = RealmManager.AddWorld(new GauntletMap()); break; //this allows each dungeon to be unique
-                    default: psr.SendPacket(new TextPacket
-                    {
-                        BubbleTime = 0,
-                        Stars = -1,
-                        Name = "",
-                        Text = "Portal Not Implemented!"
-                    }); break;
+                    default: SendError("Portal Not Implemented!"); break;
                     //case 1795
                     /*case 0x0712:
                         world = RealmManager.GetWorld(World.NEXUS_ID); break;*/
                 }
-                
+
                 entity.WorldInstance = world;
-            }            
-            
+            }
+
             //used to match up player to last realm they were in, to return them to it. Sometimes is odd, like from Vault back to Vault...
             if (RealmManager.PlayerWorldMapping.ContainsKey(this.AccountId))
             {
@@ -417,13 +411,7 @@ namespace wServer.realm.entities
         {
             if (!this.TPCooledDown())
             {
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = "Too soon to teleport again!"
-                });
+                SendError("Too soon to teleport again!");
                 return;
             }
             SetTPDisabledPeriod();
@@ -530,13 +518,9 @@ namespace wServer.realm.entities
                 HP = Stats[0] + Stats[0];
                 MP = Stats[1] + Stats[1];
                 Inventory[i] = null;
-                psr.SendPacket(new TextPacket()
-                {
-                    BubbleTime = 0,
-                    Stars = -1,
-                    Name = "",
-                    Text = string.Format("{0}'s {1} breaks and he disappears", Name, item.ObjectId)
-                });
+                foreach (var player in Owner.Players.Values)
+                    player.SendInfo(string.Format("{0}'s {1} breaks and he disappears", Name, item.ObjectId));
+                
                 psr.Reconnect(new ReconnectPacket()
                 {
                     Host = "",
@@ -626,13 +610,8 @@ namespace wServer.realm.entities
             }
 
             GenerateGravestone();
-            Owner.BroadcastPacket(new TextPacket()
-            {
-                BubbleTime = 0,
-                Stars = -1,
-                Name = "",                
-                Text = Name + " died at Level " + Level + ", with " + Fame + " Fame" +/* " and " + Experience + " Experience " + */", killed by " + killer //removed XP as max packet length reached!
-            }, null);
+            foreach (var i in Owner.Players.Values)
+                i.SendInfo(Name + " died at Level " + Level + ", with " + Fame + " Fame" +/* " and " + Experience + " Experience " + */", killed by " + killer); //removed XP as max packet length reached!
 
             psr.Character.Dead = true;
             SaveToCharacter();
