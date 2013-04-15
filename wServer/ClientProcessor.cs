@@ -53,12 +53,16 @@ namespace wServer
             handler.SendPackets(pkts);
         }
 
-        internal bool ProcessPacket(Packet pkt)
+        public bool IsReady()
         {
             if (stage == ProtocalStage.Disconnected)
                 return false;
             if (stage == ProtocalStage.Ready && (entity == null || entity != null && entity.Owner == null))
                 return false;
+            return true;
+        }
+        internal void ProcessPacket(Packet pkt)
+        {
             try
             {
                 if (pkt.ID == PacketID.Hello)
@@ -82,7 +86,7 @@ namespace wServer
                 else if (pkt.ID == PacketID.PlayerHit)
                     RealmManager.Logic.AddPendingAction(t => entity.PlayerHit(t, pkt as PlayerHitPacket));
                 else if (pkt.ID == PacketID.ShootAck)   //TODO: this one is spammed when lots of bullet, special handle?
-                    RealmManager.Network.AddPendingAction(this, t => entity.ShootAck(t, pkt as ShootAckPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.ShootAck(t, pkt as ShootAckPacket));
                 else if (pkt.ID == PacketID.InvSwap)
                     RealmManager.Logic.AddPendingAction(t => entity.InventorySwap(t, pkt as InvSwapPacket));
                 else if (pkt.ID == PacketID.InvDrop)
@@ -90,7 +94,7 @@ namespace wServer
                 else if (pkt.ID == PacketID.UseItem)
                     RealmManager.Logic.AddPendingAction(t => entity.UseItem(t, pkt as UseItemPacket));
                 else if (pkt.ID == PacketID.UsePortal)
-                    RealmManager.Network.AddPendingAction(this, t => entity.UsePortal(t, pkt as UsePortalPacket));
+                    RealmManager.Logic.AddPendingAction(t => entity.UsePortal(t, pkt as UsePortalPacket));
                 else if (pkt.ID == PacketID.PlayerText)
                     RealmManager.Logic.AddPendingAction(t => entity.PlayerText(t, pkt as PlayerTextPacket));
                 else if (pkt.ID == PacketID.ChooseName)
@@ -126,9 +130,8 @@ namespace wServer
             }
             catch
             {
-                return false;
+                Disconnect();
             }
-            return true;
         }
 
         public void Disconnect()

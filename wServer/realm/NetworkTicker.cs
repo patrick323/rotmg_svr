@@ -9,13 +9,13 @@ namespace wServer.realm
 {
     public class NetworkTicker //Sync network processing
     {
-        public void AddPendingAction(ClientProcessor client, Action<RealmTime> callback)
+        public void AddPendingPacket(ClientProcessor client, Packet packet)
         {
-            pendings.Enqueue(new Tuple<ClientProcessor, Action<RealmTime>>(client, callback));
+            pendings.Enqueue(new Tuple<ClientProcessor, Packet>(client, packet));
             handle.Set();
         }
         AutoResetEvent handle = new AutoResetEvent(false);
-        static ConcurrentQueue<Tuple<ClientProcessor, Action<RealmTime>>> pendings = new ConcurrentQueue<Tuple<ClientProcessor, Action<RealmTime>>>();
+        static ConcurrentQueue<Tuple<ClientProcessor, Packet>> pendings = new ConcurrentQueue<Tuple<ClientProcessor, Packet>>();
 
 
         public void TickLoop()
@@ -31,7 +31,7 @@ namespace wServer.realm
 
                 handle.WaitOne();
 
-                Tuple<ClientProcessor, Action<RealmTime>> work;
+                Tuple<ClientProcessor, Packet> work;
                 while (pendings.TryDequeue(out work))
                 {
                     if (work.Item1.Stage == ProtocalStage.Disconnected)
@@ -42,7 +42,7 @@ namespace wServer.realm
                     }
                     try
                     {
-                        work.Item2(LogicTicker.CurrentTime);
+                        work.Item1.ProcessPacket(work.Item2);
                     }
                     catch { }
                 }

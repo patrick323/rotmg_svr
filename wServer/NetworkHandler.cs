@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Net;
+using wServer.realm;
 
 namespace wServer
 {
@@ -51,6 +52,10 @@ namespace wServer
         public void BeginHandling()
         {
             Console.WriteLine("{0} connected.", skt.RemoteEndPoint);
+
+            skt.NoDelay = true;
+            skt.UseOnlyOverlappedIO = true;
+
             send = new SocketAsyncEventArgs();
             send.Completed += IOCompleted;
             send.UserToken = new SendToken();
@@ -196,7 +201,13 @@ namespace wServer
         }
         bool OnPacketReceived(Packet pkt)
         {
-            return parent.ProcessPacket(pkt);
+            if (parent.IsReady())
+            {
+                RealmManager.Network.AddPendingPacket(parent, pkt);
+                return true;
+            }
+            else
+                return false;
         }
         ConcurrentQueue<Packet> pendingPackets = new ConcurrentQueue<Packet>();
         bool CanSendPacket(SocketAsyncEventArgs e, bool ignoreSending)

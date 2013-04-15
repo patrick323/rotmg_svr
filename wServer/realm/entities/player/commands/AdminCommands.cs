@@ -17,7 +17,7 @@ namespace wServer.realm.entities.player.commands
             int num;
             string name = args;
 
-            if (args.IndexOf(' ') > 0 && int.TryParse(args.Substring(args.IndexOf(' ')), out num)) //multi
+            if (args.IndexOf(' ') > 0 && int.TryParse(args.Substring(0, args.IndexOf(' ')), out num)) //multi
                 name = args.Substring(index + 1);
             else
                 num = 1;
@@ -112,7 +112,7 @@ namespace wServer.realm.entities.player.commands
             }
 
             int x, y;
-            if (!int.TryParse(coordinates[0], out x) || 
+            if (!int.TryParse(coordinates[0], out x) ||
                 !int.TryParse(coordinates[1], out y))
             {
                 player.SendError("Invalid coordinates!");
