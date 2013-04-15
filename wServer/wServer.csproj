@@ -189,7 +189,7 @@
     <Compile Include="realm\entities\ConnectedObject.cs" />
     <Compile Include="realm\entities\Placeholder.cs" />
     <Compile Include="realm\entities\Decoy.cs" />
-    <Compile Include="realm\entities\player\commands\ICommand.cs" />
+    <Compile Include="realm\entities\player\commands\Command.cs" />
     <Compile Include="realm\entities\player\commands\WorldCommand.cs" />
     <Compile Include="realm\entities\player\Player.Ground.cs" />
     <Compile Include="realm\entities\player\Player.Chat.cs" />

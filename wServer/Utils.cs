@@ -27,4 +27,16 @@ namespace wServer
             return current;
         }
     }
+
+    static class StringUtils
+    {
+        public static bool ContainsIgnoreCase(this string self, string val)
+        {
+            return self.IndexOf(val, StringComparison.InvariantCultureIgnoreCase) != -1;
+        }
+        public static bool EqualsIgnoreCase(this string self, string val)
+        {
+            return self.Equals(val, StringComparison.InvariantCultureIgnoreCase);
+        }
+    }
 }

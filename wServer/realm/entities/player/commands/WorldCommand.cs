@@ -6,12 +6,11 @@ using wServer.svrPackets;
 
 namespace wServer.realm.entities.player.commands
 {
-    class TutorialCommand : ICommand
+    class TutorialCommand : Command
     {
-        public string Command { get { return "tutorial"; } }
-        public bool RequirePerm { get { return false; } }
+        public TutorialCommand() : base("tutorial") { }
 
-        public void Execute(Player player, string[] args)
+        protected override bool Process(Player player, RealmTime time, string args)
         {
             player.Client.Reconnect(new ReconnectPacket()
             {
@@ -21,45 +20,50 @@ namespace wServer.realm.entities.player.commands
                 Name = "Tutorial",
                 Key = Empty<byte>.Array,
             });
+            return true;
         }
     }
 
-    class WhoCommand : ICommand
+    class WhoCommand : Command
     {
-        public string Command { get { return "who"; } }
-        public bool RequirePerm { get { return false; } }
+        public WhoCommand() : base("who") { }
 
-        public void Execute(Player player, string[] args)
+        protected override bool Process(Player player, RealmTime time, string args)
         {
             StringBuilder sb = new StringBuilder("Players online: ");
             var copy = player.Owner.Players.Values.ToArray();
-            for (int i = 0; i < copy.Length; i++)
+            if (copy.Length == 0)
+                player.SendInfo("Nobody else is online");
+            else
             {
-                if (i != 0) sb.Append(", ");
-                sb.Append(copy[i].Name);
-            }
+                for (int i = 0; i < copy.Length; i++)
+                {
+                    if (i != 0) sb.Append(", ");
+                    sb.Append(copy[i].Name);
+                }
 
-            player.SendInfo(sb.ToString());
+                player.SendInfo(sb.ToString());
+            }
+            return true;
         }
     }
 
-    class ServerCommand : ICommand
+    class ServerCommand : Command
     {
-        public string Command { get { return "server"; } }
-        public bool RequirePerm { get { return false; } }
+        public ServerCommand() : base("server") { }
 
-        public void Execute(Player player, string[] args)
+        protected override bool Process(Player player, RealmTime time, string args)
         {
             player.SendInfo(player.Owner.Name);
+            return true;
         }
     }
 
-    class PauseCommand : ICommand
+    class PauseCommand : Command
     {
-        public string Command { get { return "pause"; } }
-        public bool RequirePerm { get { return false; } }
+        public PauseCommand() : base("pause") { }
 
-        public void Execute(Player player, string[] args)
+        protected override bool Process(Player player, RealmTime time, string args)
         {
             if (player.HasConditionEffect(ConditionEffects.Paused))
             {
@@ -69,11 +73,15 @@ namespace wServer.realm.entities.player.commands
                     DurationMS = 0
                 });
                 player.SendInfo("Game resumed.");
+                return true;
             }
             else
             {
                 if (player.Owner.EnemiesCollision.HitTest(player.X, player.Y, 8).OfType<Enemy>().Any())
+                {
                     player.SendError("Not safe to pause.");
+                    return false;
+                }
                 else
                 {
                     player.ApplyConditionEffect(new ConditionEffect()
@@ -82,6 +90,7 @@ namespace wServer.realm.entities.player.commands
                         DurationMS = -1
                     });
                     player.SendInfo("Game paused.");
+                    return true;
                 }
             }
         }
@@ -92,89 +101,106 @@ namespace wServer.realm.entities.player.commands
     /// This leads to the unfortunate situation where the cooldown has been not been reached, but the UI doesn't know. The graphical TP will fail
     /// and cause it's timer to reset. NB: typing /teleport will workaround this timeout issue.
     /// </summary>
-    class TeleportCommand : ICommand
+    class TeleportCommand : Command
     {
-        public string Command { get { return "teleport"; } }
-        public bool RequirePerm { get { return false; } }
+        public TeleportCommand() : base("teleport") { }
 
-        public void Execute(Player player, string[] args)
+        protected override bool Process(Player player, RealmTime time, string args)
         {
-                if (player.Name.ToLower() == args[0].ToLower())
-                {
-                    player.SendInfo("You are already at yourself, and always will be!");
-                    return;
-                }
+            if (player.Name.EqualsIgnoreCase(args))
+            {
+                player.SendInfo("You are already at yourself, and always will be!");
+                return false;
+            }
 
-                foreach (var i in player.Owner.Players)
+            foreach (var i in player.Owner.Players)
+            {
+                if (i.Value.Name.EqualsIgnoreCase(args))
                 {
-                    if (i.Value.Name.ToLower() == args[0].ToLower().Trim())
-                    {
-                        player.Teleport(new RealmTime(), new cliPackets.TeleportPacket()
-                        {
-                            ObjectId = i.Value.Id
-                        });
-                        return;
-                    }
+                    player.Teleport(time, i.Value.Id);
+                    return true;
                 }
-                player.SendInfo(string.Format("Cannot teleport, {0} not found!", args[0].Trim()));
+            }
+            player.SendInfo(string.Format("Unable to find player: {0}", args));
+            return false;
         }
     }
 
-    class TellCommand : ICommand
+    class TellCommand : Command
     {
-        public string Command { get { return "tell"; } }
-        public bool RequirePerm { get { return false; } }
+        public TellCommand() : base("tell") { }
 
-        public void Execute(Player player, string[] args)
+        protected override bool Process(Player player, RealmTime time, string args)
         {
-            if (!(player.NameChosen))
+            if (!player.NameChosen)
             {
                 player.SendError("Choose a name!");
-                return;
+                return false;
+            }
+            int index = args.IndexOf(' ');
+            if (index == -1)
+            {
+                player.SendError("Usage: /tell <player name> <text>");
+                return false;
             }
 
-            string playername = args[0].Trim();
+            string playername = args.Substring(0, index);
+            string msg = args.Substring(index + 1);
 
             if (player.Name.ToLower() == playername.ToLower())
             {
-                player.SendError("Quit telling yourself!");
-                return;
+                player.SendInfo("Quit telling yourself!");
+                return false;
             }
 
-            string saytext = string.Join(" ", args, 1, args.Length - 1);
-
-            foreach (var w in RealmManager.Worlds)
+            foreach (var i in RealmManager.Clients.Values)
             {
-                World world = w.Value;
-                if (w.Key != 0) // 0 is limbo??
+                if (i.Account.NameChosen && i.Account.Name.EqualsIgnoreCase(playername))
                 {
-                    foreach (var i in world.Players)
+                    player.Client.SendPacket(new TextPacket() //echo to self
                     {
-                        if (i.Value.Name.ToLower() == args[0].ToLower().Trim() && i.Value.NameChosen)
-                        {
-                            player.Client.SendPacket(new TextPacket() //echo to self
-                            {
-                                BubbleTime = 10,
-                                Stars = player.Stars,
-                                Name = player.Name,
-                                Recipient = i.Value.Name,
-                                Text = saytext
-                            });
+                        BubbleTime = 10,
+                        Stars = player.Stars,
+                        Name = player.Name,
+                        Recipient = i.Account.Name,
+                        Text = msg
+                    });
 
-                            i.Value.Client.SendPacket(new TextPacket() //echo to /tell player
-                            {
-                                BubbleTime = 10,
-                                Stars = player.Stars,
-                                Recipient = i.Value.Name,
-                                Name = player.Name,
-                                Text = saytext
-                            });
-                            return;
-                        }
-                    }
+                    i.SendPacket(new TextPacket() //echo to /tell player
+                    {
+                        BubbleTime = 10,
+                        Stars = player.Stars,
+                        Name = player.Name,
+                        Recipient = i.Account.Name,
+                        Text = msg
+                    });
+                    return true;
                 }
             }
-            player.SendError("Cannot /tell, {0} not found!");
+            player.SendError(string.Format("{0} not found.", playername));
+            return false;
+        }
+    }
+
+    class HelpCommand : Command
+    {
+        //actually the command is 'help', but /help is intercepted by client
+        public HelpCommand() : base("commands") { }
+
+        protected override bool Process(Player player, RealmTime time, string args)
+        {
+            StringBuilder sb = new StringBuilder("Available commands: ");
+            var cmds = CommandManager.Commands.Values
+                .Where(x => x.HasPermission(player))
+                .ToArray();
+            for (int i = 0; i < cmds.Length; i++)
+            {
+                if (i != 0) sb.Append(", ");
+                sb.Append(cmds[i].CommandName);
+            }
+
+            player.SendInfo(sb.ToString());
+            return true;
         }
     }
 }

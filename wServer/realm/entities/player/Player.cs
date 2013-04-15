@@ -409,13 +409,18 @@ namespace wServer.realm.entities
 
         public void Teleport(RealmTime time, TeleportPacket pkt)
         {
+            Teleport(time, pkt.ObjectId);
+        }
+
+        public void Teleport(RealmTime time, int objId)
+        {
             if (!this.TPCooledDown())
             {
                 SendError("Too soon to teleport again!");
                 return;
             }
             SetTPDisabledPeriod();
-            var obj = Owner.GetEntity(pkt.ObjectId);
+            var obj = Owner.GetEntity(objId);
             if (obj == null) return;
             Move(obj.X, obj.Y);
             fames.Teleport();
