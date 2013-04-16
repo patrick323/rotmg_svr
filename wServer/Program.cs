@@ -8,6 +8,7 @@ using System.Threading;
 using wServer.realm;
 using System.Net.NetworkInformation;
 using wServer.networking;
+using System.Globalization;
 
 namespace wServer
 {
@@ -15,6 +16,7 @@ namespace wServer
     {
         static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.Name = "Server Entry Point";
 
             RealmManager manager = new RealmManager();

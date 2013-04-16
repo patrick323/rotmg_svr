@@ -9,6 +9,7 @@ using System.IO;
 using wServer.realm.worlds;
 using System.Collections.Concurrent;
 using wServer.networking;
+using System.Globalization;
 
 namespace wServer.realm
 {
@@ -113,8 +114,16 @@ namespace wServer.realm
         {
             Network = new NetworkTicker(this);
             Logic = new LogicTicker(this);
-            network = new Thread(Network.TickLoop) { Name = "Network Process Thread" };
-            logic = new Thread(Logic.TickLoop) { Name = "Logic Ticking Thread" };
+            network = new Thread(Network.TickLoop)
+            {
+                Name = "Network Process Thread",
+                CurrentCulture = CultureInfo.InvariantCulture
+            };
+            logic = new Thread(Logic.TickLoop)
+            {
+                Name = "Logic Ticking Thread",
+                CurrentCulture = CultureInfo.InvariantCulture
+            };
             //Start logic loop first
             logic.Start();
             network.Start();
