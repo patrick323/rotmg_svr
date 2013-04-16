@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using db;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 using System.Xml.Linq;
 
 namespace wServer.realm.entities

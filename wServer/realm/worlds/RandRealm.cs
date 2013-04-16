@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using wServer.realm.entities;
+using wServer.networking;
 
 namespace wServer.realm.worlds
 {
@@ -17,9 +18,9 @@ namespace wServer.realm.worlds
             IsLimbo = true;
         }
 
-        public override World GetInstance(ClientProcessor psr)
+        public override World GetInstance(Client client)
         {
-            return RealmManager.Monitor.GetRandomRealm();
+            return Manager.Monitor.GetRandomRealm();
         }
     }
 }

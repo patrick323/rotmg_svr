@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.svrPackets;
-using wServer.cliPackets;
+using wServer.networking.svrPackets;
+using wServer.networking.cliPackets;
 
 namespace wServer.realm.entities
 {
@@ -13,17 +13,20 @@ namespace wServer.realm.entities
         int? lastTime = null;
         long tickMapping = 0;
         Queue<long> ts = new Queue<long>();
+
+        bool sentPing = false;
         bool KeepAlive(RealmTime time)
         {
             if (lastPong == -1) lastPong = time.tickTimes - 1500;
-            if (time.tickTimes - lastPong > 1500)
+            if (time.tickTimes - lastPong > 1500 && !sentPing)
             {
+                sentPing = true;
                 ts.Enqueue(time.tickTimes);
-                psr.SendPacket(new PingPacket());
+                client.SendPacket(new PingPacket());
             }
             else if (time.tickTimes - lastPong > 3000)
             {
-                //psr.Disconnect();
+                //client.Disconnect();
                 return false;
             }
             return true;
@@ -31,11 +34,12 @@ namespace wServer.realm.entities
         public void Pong(PongPacket pkt)
         {
             if (lastTime != null && (pkt.Time - lastTime.Value > 3000 || pkt.Time - lastTime.Value < 0))
-                ;//psr.Disconnect();
+                ;//client.Disconnect();
             else
                 lastTime = pkt.Time;
             tickMapping = ts.Dequeue() - pkt.Time;
             lastPong = pkt.Time + tickMapping;
+            sentPing = false;
         }
     }
 }

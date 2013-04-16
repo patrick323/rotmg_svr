@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.cliPackets;
-using wServer.svrPackets;
+using wServer.networking.cliPackets;
+using wServer.networking.svrPackets;
 using wServer.logic;
+using wServer.networking;
 
 namespace wServer.realm.entities
 {
@@ -190,7 +191,7 @@ namespace wServer.realm.entities
 
                 tmr.Reset();
 
-                RealmManager.Logic.AddPendingAction(_ => w.Timers.Add(tmr), PendingPriority.Creation);
+                Manager.Logic.AddPendingAction(_ => w.Timers.Add(tmr), PendingPriority.Creation);
             });
             Owner.Timers.Add(tmr);
         }
@@ -685,7 +686,7 @@ namespace wServer.realm.entities
                         int TimeoutTime = XmlDatas.PortalDescs[objType].TimeoutTime;
                         
                         Owner.EnterWorld(entity);
-                        World w = RealmManager.GetWorld(Owner.Id); //can't use Owner here, as it goes out of scope
+                        World w = Manager.GetWorld(Owner.Id); //can't use Owner here, as it goes out of scope
                         w.Timers.Add(new WorldTimer(TimeoutTime * 1000, (world, t) => //default portal close time * 1000
                         {
                             try

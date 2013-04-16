@@ -4,50 +4,47 @@ using System.Linq;
 using System.Text;
 using System.Collections.Concurrent;
 using System.Threading;
+using wServer.networking;
 
 namespace wServer.realm
 {
+    using Work = Tuple<Client, Packet>;
     public class NetworkTicker //Sync network processing
     {
-        public void AddPendingPacket(ClientProcessor client, Packet packet)
+        public RealmManager Manager { get; private set; }
+        public NetworkTicker(RealmManager manager)
         {
-            pendings.Enqueue(new Tuple<ClientProcessor, Packet>(client, packet));
-            handle.Set();
+            this.Manager = manager;
         }
-        AutoResetEvent handle = new AutoResetEvent(false);
-        static ConcurrentQueue<Tuple<ClientProcessor, Packet>> pendings = new ConcurrentQueue<Tuple<ClientProcessor, Packet>>();
+
+        public void AddPendingPacket(Client client, Packet packet)
+        {
+            pendings.Add(new Tuple<Client, Packet>(client, packet));
+        }
+        static BlockingCollection<Work> pendings =
+           new BlockingCollection<Work>(new ConcurrentQueue<Work>());
 
 
         public void TickLoop()
         {
-            do
+            Tuple<Client, Packet> work;
+            while (true)
             {
-                foreach (var i in RealmManager.Clients)
-                    if (i.Value.Stage == ProtocalStage.Disconnected)
-                    {
-                        ClientProcessor psr;
-                        RealmManager.Clients.TryRemove(i.Key, out psr);
-                    }
-
-                handle.WaitOne();
-
-                Tuple<ClientProcessor, Packet> work;
-                while (pendings.TryDequeue(out work))
+                work = pendings.Take();
+                if (pendings.Count > 0)
+                    Console.WriteLine(pendings.Count);
+                if (work.Item1.Stage == ProtocalStage.Disconnected)
                 {
-                    if (work.Item1.Stage == ProtocalStage.Disconnected)
-                    {
-                        ClientProcessor psr;
-                        RealmManager.Clients.TryRemove(work.Item1.Account.AccountId, out psr);
-                        continue;
-                    }
-                    try
-                    {
-                        work.Item1.ProcessPacket(work.Item2);
-                    }
-                    catch { }
+                    Client client;
+                    Manager.Clients.TryRemove(work.Item1.Account.AccountId, out client);
+                    continue;
                 }
-
-            } while (true);
+                try
+                {
+                    work.Item1.ProcessPacket(work.Item2);
+                }
+                catch { }
+            }
         }
     }
 }

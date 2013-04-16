@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using wServer.realm.entities;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 
 namespace wServer.realm.worlds
 {

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.cliPackets;
-using wServer.svrPackets;
+using wServer.networking.cliPackets;
+using wServer.networking.svrPackets;
 
 namespace wServer.realm.entities
 {
@@ -16,7 +16,7 @@ namespace wServer.realm.entities
 
         void SendAccountList(List<int> list, int id)
         {
-            psr.SendPacket(new AccountListPacket()
+            client.SendPacket(new AccountListPacket()
             {
                 AccountListId = id,
                 AccountIds = list.ToArray()
@@ -34,7 +34,7 @@ namespace wServer.realm.entities
 
             Player player = Owner.GetEntity(pkt.ObjectId) as Player;
             if (player == null) return;
-            int accId = player.psr.Account.AccountId;
+            int accId = player.client.Account.AccountId;
 
             if (pkt.Add && list.Count < 6)
                 list.Add(accId);

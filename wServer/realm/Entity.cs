@@ -5,7 +5,7 @@ using System.Text;
 using db;
 using wServer.realm.entities;
 using wServer.logic;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 
 namespace wServer.realm
 {
@@ -39,6 +39,7 @@ namespace wServer.realm
         public ObjectDesc ObjectDesc { get { return desc; } }
 
         public World Owner { get; internal set; }
+        public RealmManager Manager { get { return Owner.Manager; } }
 
         public int UpdateCount { get; set; }
 

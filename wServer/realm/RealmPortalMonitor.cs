@@ -4,20 +4,22 @@ using System.Linq;
 using System.Text;
 using wServer.realm.worlds;
 using wServer.realm.entities;
+using wServer.realm.terrain;
 
 namespace wServer.realm
 {
     public class RealmPortalMonitor
     {
         Nexus nexus;
+        RealmManager manager;
         object worldLock = new object();
         Dictionary<World, Portal> portals = new Dictionary<World, Portal>();
 
-        public RealmPortalMonitor(Nexus nexus)
+        public RealmPortalMonitor(RealmManager manager)
         {
-            this.nexus = nexus;
+            this.nexus = manager.Worlds[World.NEXUS_ID] as Nexus;
             lock (worldLock)
-                foreach (var i in RealmManager.Worlds)
+                foreach (var i in manager.Worlds)
                 {
                     if (i.Value is GameWorld)
                         WorldAdded(i.Value);
@@ -95,7 +97,7 @@ namespace wServer.realm
             {
                 var worlds = portals.Keys.ToArray();
                 if (worlds.Length == 0)
-                    return RealmManager.Worlds[World.NEXUS_ID];
+                    return manager.Worlds[World.NEXUS_ID];
                 else
                     return worlds[Environment.TickCount % worlds.Length];
             }

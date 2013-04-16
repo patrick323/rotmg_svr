@@ -5,8 +5,9 @@ using System.Text;
 using wServer.realm.worlds;
 using wServer.realm.entities;
 using wServer.logic;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 using wServer.realm.setpieces;
+using wServer.realm.terrain;
 
 namespace wServer.realm
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using wServer.networking;
 
 namespace wServer.realm.worlds
 {
@@ -17,9 +18,9 @@ namespace wServer.realm.worlds
             base.FromWorldMap(typeof(RealmManager).Assembly.GetManifestResourceStream("wServer.realm.worlds.gauntlet.wmap"));            
         }
 
-        public override World GetInstance(ClientProcessor psr)
+        public override World GetInstance(Client client)
         {
-            return RealmManager.AddWorld(new GauntletMap());
+            return Manager.AddWorld(new GauntletMap());
         }
     }
 }

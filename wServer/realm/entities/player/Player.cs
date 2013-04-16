@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.svrPackets;
-using wServer.cliPackets;
 using System.Collections.Concurrent;
 using wServer.realm.worlds;
 using wServer.logic;
+using wServer.networking.svrPackets;
+using wServer.networking.cliPackets;
+using wServer.networking;
+using wServer.realm.terrain;
 
 namespace wServer.realm.entities
 {
@@ -18,8 +20,8 @@ namespace wServer.realm.entities
 
     public partial class Player : Character, IContainer, IPlayer
     {
-        ClientProcessor psr;
-        public ClientProcessor Client { get { return psr; } }
+        Client client;
+        public Client Client { get { return client; } }
 
         //Stats
         public int AccountId { get; private set; }
@@ -161,7 +163,7 @@ namespace wServer.realm.entities
         }
         public void SaveToCharacter()
         {
-            var chr = psr.Character;
+            var chr = client.Character;
             chr.Exp = Experience;
             chr.Level = Level;
             chr.Tex1 = Texture1;
@@ -207,25 +209,25 @@ namespace wServer.realm.entities
 
 
         StatsManager statsMgr;
-        public Player(ClientProcessor psr)
-            : base((short)psr.Character.ObjectType, psr.Random)
+        public Player(Client client)
+            : base((short)client.Character.ObjectType, client.Random)
         {
-            this.psr = psr;
+            this.client = client;
             statsMgr = new StatsManager(this);
-            Name = psr.Account.Name;
-            AccountId = psr.Account.AccountId;
+            Name = client.Account.Name;
+            AccountId = client.Account.AccountId;
 
-            Level = psr.Character.Level;
-            Experience = psr.Character.Exp;
-            ExperienceGoal = GetExpGoal(psr.Character.Level);
+            Level = client.Character.Level;
+            Experience = client.Character.Exp;
+            ExperienceGoal = GetExpGoal(client.Character.Level);
             Stars = GetStars();
-            Texture1 = psr.Character.Tex1;
-            Texture2 = psr.Character.Tex2;
-            Credits = psr.Account.Credits;
-            NameChosen = psr.Account.NameChosen;
-            CurrentFame = psr.Account.Stats.Fame;
-            Fame = psr.Character.CurrentFame;
-            var state = psr.Account.Stats.ClassStates.SingleOrDefault(_ => _.ObjectType == ObjectType);
+            Texture1 = client.Character.Tex1;
+            Texture2 = client.Character.Tex2;
+            Credits = client.Account.Credits;
+            NameChosen = client.Account.NameChosen;
+            CurrentFame = client.Account.Stats.Fame;
+            Fame = client.Character.CurrentFame;
+            var state = client.Account.Stats.ClassStates.SingleOrDefault(_ => _.ObjectType == ObjectType);
             if (state != null)
                 FameGoal = GetFameGoal(state.BestFame);
             else
@@ -233,22 +235,22 @@ namespace wServer.realm.entities
             Glowing = true;
             Guild = "";
             GuildRank = -1;
-            HP = psr.Character.HitPoints;
-            MP = psr.Character.MagicPoints;
+            HP = client.Character.HitPoints;
+            MP = client.Character.MagicPoints;
             ConditionEffects = 0;
 
-            Inventory = psr.Character.Equipment.Select(_ => _ == -1 ? null : XmlDatas.ItemDescs[_]).ToArray();
+            Inventory = client.Character.Equipment.Select(_ => _ == -1 ? null : XmlDatas.ItemDescs[_]).ToArray();
             SlotTypes = Utils.FromCommaSepString32(XmlDatas.TypeToElement[ObjectType].Element("SlotTypes").Value);
             Stats = new int[]
             {
-                psr.Character.MaxHitPoints,
-                psr.Character.MaxMagicPoints,
-                psr.Character.Attack,
-                psr.Character.Defense,
-                psr.Character.Speed,
-                psr.Character.HpRegen,
-                psr.Character.MpRegen,
-                psr.Character.Dexterity,
+                client.Character.MaxHitPoints,
+                client.Character.MaxMagicPoints,
+                client.Character.Attack,
+                client.Character.Defense,
+                client.Character.Speed,
+                client.Character.HpRegen,
+                client.Character.MpRegen,
+                client.Character.Dexterity,
             };
         }
 
@@ -274,7 +276,7 @@ namespace wServer.realm.entities
 
         public override void Tick(RealmTime time)
         {
-            if (psr.Stage == ProtocalStage.Disconnected)
+            if (client.Stage == ProtocalStage.Disconnected)
             {
                 Owner.LeaveWorld(this);
                 return;
@@ -363,24 +365,24 @@ namespace wServer.realm.entities
                 {
                     case 0x0703: //portal of cowardice
                         {
-                            if (RealmManager.PlayerWorldMapping.ContainsKey(this.AccountId))  //may not be valid, realm recycled?
-                                world = RealmManager.PlayerWorldMapping[this.AccountId];  //also reconnecting to vault is a little unexpected
+                            if (Manager.PlayerWorldMapping.ContainsKey(this.AccountId))  //may not be valid, realm recycled?
+                                world = Manager.PlayerWorldMapping[this.AccountId];  //also reconnecting to vault is a little unexpected
                             else
-                                world = RealmManager.GetWorld(World.NEXUS_ID);
+                                world = Manager.GetWorld(World.NEXUS_ID);
                         } break;
                     case 0x0712:
-                        world = RealmManager.GetWorld(World.VAULT_ID); break;
+                        world = Manager.GetWorld(World.VAULT_ID); break;
                     case 0x071d:
-                        world = RealmManager.GetWorld(World.NEXUS_ID); break;
+                        world = Manager.GetWorld(World.NEXUS_ID); break;
                     case 0x071c:
-                        world = RealmManager.Monitor.GetRandomRealm(); break;
+                        world = Manager.Monitor.GetRandomRealm(); break;
                     case 0x0720:
-                        world = RealmManager.GetWorld(World.VAULT_ID); break;
+                        world = Manager.GetWorld(World.VAULT_ID); break;
                     case 0x071e:
-                        world = RealmManager.AddWorld(new Kitchen()); break;
+                        world = Manager.AddWorld(new Kitchen()); break;
                     case 0x071f: //these need to match IDs
                         //world = RealmManager.GetWorld(World.GauntletMap); break; //this creates a singleton dungeon
-                        world = RealmManager.AddWorld(new GauntletMap()); break; //this allows each dungeon to be unique
+                        world = Manager.AddWorld(new GauntletMap()); break; //this allows each dungeon to be unique
                     default: SendError("Portal Not Implemented!"); break;
                     //case 1795
                     /*case 0x0712:
@@ -391,13 +393,13 @@ namespace wServer.realm.entities
             }
 
             //used to match up player to last realm they were in, to return them to it. Sometimes is odd, like from Vault back to Vault...
-            if (RealmManager.PlayerWorldMapping.ContainsKey(this.AccountId))
+            if (Manager.PlayerWorldMapping.ContainsKey(this.AccountId))
             {
                 World tempWorld;
-                RealmManager.PlayerWorldMapping.TryRemove(this.AccountId, out tempWorld);
+                Manager.PlayerWorldMapping.TryRemove(this.AccountId, out tempWorld);
             }
-            RealmManager.PlayerWorldMapping.TryAdd(this.AccountId, Owner);
-            psr.Reconnect(new ReconnectPacket()
+            Manager.PlayerWorldMapping.TryAdd(this.AccountId, Owner);
+            client.Reconnect(new ReconnectPacket()
             {
                 Host = "",
                 Port = 2050,
@@ -526,7 +528,7 @@ namespace wServer.realm.entities
                 foreach (var player in Owner.Players.Values)
                     player.SendInfo(string.Format("{0}'s {1} breaks and he disappears", Name, item.ObjectId));
                 
-                psr.Reconnect(new ReconnectPacket()
+                client.Reconnect(new ReconnectPacket()
                 {
                     Host = "",
                     Port = 2050,
@@ -602,15 +604,15 @@ namespace wServer.realm.entities
 
         public void Death(string killer)
         {
-            if (psr.Stage == ProtocalStage.Disconnected || resurrecting)
+            if (client.Stage == ProtocalStage.Disconnected || resurrecting)
                 return;
             if (CheckResurrection())
                 return;
 
 
-            if (psr.Character.Dead)
+            if (client.Character.Dead)
             {
-                psr.Disconnect();
+                client.Disconnect();
                 return;
             }
 
@@ -618,17 +620,17 @@ namespace wServer.realm.entities
             foreach (var i in Owner.Players.Values)
                 i.SendInfo(Name + " died at Level " + Level + ", with " + Fame + " Fame" +/* " and " + Experience + " Experience " + */", killed by " + killer); //removed XP as max packet length reached!
 
-            psr.Character.Dead = true;
+            client.Character.Dead = true;
             SaveToCharacter();
-            psr.Database.SaveCharacter(psr.Account, psr.Character);
-            psr.Database.Death(psr.Account, psr.Character, killer);
-            psr.SendPacket(new DeathPacket()
+            client.Database.SaveCharacter(client.Account, client.Character);
+            client.Database.Death(client.Account, client.Character, killer);
+            client.SendPacket(new DeathPacket()
             {
                 AccountId = AccountId,
-                CharId = psr.Character.CharacterId,
+                CharId = client.Character.CharacterId,
                 Killer = killer
             });
-            Owner.Timers.Add(new WorldTimer(1000, (w, t) => psr.Disconnect()));
+            Owner.Timers.Add(new WorldTimer(1000, (w, t) => client.Disconnect()));
             Owner.LeaveWorld(this);
         }
     }

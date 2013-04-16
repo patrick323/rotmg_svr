@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
+using wServer.realm.terrain;
 
 namespace wServer.realm.entities
 {
@@ -150,30 +151,15 @@ namespace wServer.realm.entities
                 packet.Tiles = list.ToArray();
                 packet.NewObjects = sendEntities.Select(_ => _.ToDefinition()).Concat(newStatics).ToArray();
                 packet.RemovedObjectIds = dropEntities.Concat(removedIds).ToArray();
-                psr.SendPacket(packet);
+                client.SendPacket(packet);
             }
             SendNewTick(time);
         }
 
-        const int TICK_PER_SECOND = 20;
-        int tickPassed = LogicTicker.TPS / TICK_PER_SECOND;
-        int timePassed = 0;
         int tickId = 0;
         long tickIdTime = 0;
         void SendNewTick(RealmTime time)
         {
-            if (tickPassed > 1)
-            {
-                tickPassed--;
-                timePassed += time.thisTickTimes;
-                return;
-            }
-            else
-            {
-                tickPassed = LogicTicker.TPS / TICK_PER_SECOND;
-                tickIdTime = time.tickTimes;
-            }
-
             var sendEntities = new List<Entity>();
             foreach (var i in clientEntities)
             {
@@ -191,10 +177,9 @@ namespace wServer.realm.entities
             NewTickPacket p = new NewTickPacket();
             tickId++;
             p.TickId = tickId;
-            p.TickTime = timePassed;
-            timePassed = time.thisTickTimes;
+            p.TickTime = time.thisTickTimes;
             p.UpdateStatuses = sendEntities.Select(_ => _.ExportStats()).ToArray();
-            psr.SendPacket(p);
+            client.SendPacket(p);
 
             SaveToCharacter();
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using wServer.realm;
 using wServer.realm.entities;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 
 namespace wServer.logic.behaviors
 {

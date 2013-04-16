@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -32,7 +32,7 @@ namespace wServer.realm.entities
         public int GetStars()
         {
             int ret = 0;
-            foreach (var i in psr.Account.Stats.ClassStates)
+            foreach (var i in client.Account.Stats.ClassStates)
             {
                 if (i.BestFame >= 2000) ret += 5;
                 else if (i.BestFame >= 800) ret += 4;
@@ -147,7 +147,7 @@ namespace wServer.realm.entities
                 {
                     Owner.Timers.Add(new WorldTimer(100, (w, t) =>
                     {
-                        psr.SendPacket(new QuestObjIdPacket()
+                        client.SendPacket(new QuestObjIdPacket()
                         {
                             ObjectID = newQuest.Id
                         });
@@ -166,7 +166,7 @@ namespace wServer.realm.entities
             {
                 Fame = newFame;
                 int newGoal;
-                var state = psr.Account.Stats.ClassStates.SingleOrDefault(_ => _.ObjectType == ObjectType);
+                var state = client.Account.Stats.ClassStates.SingleOrDefault(_ => _.ObjectType == ObjectType);
                 if (state != null && state.BestFame > Fame)
                     newGoal = GetFameGoal(state.BestFame);
                 else

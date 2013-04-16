@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.cliPackets;
-using wServer.svrPackets;
+using wServer.networking.cliPackets;
+using wServer.networking.svrPackets;
 using System.Collections.Concurrent;
 
 namespace wServer.realm.entities
@@ -69,13 +69,13 @@ namespace wServer.realm.entities
                         Tradeable = (target.Inventory[i] == null || i < 4) ? false : !target.Inventory[i].Soulbound
                     };
 
-                this.psr.SendPacket(new TradeStartPacket()
+                this.client.SendPacket(new TradeStartPacket()
                 {
                     MyItems = my,
                     YourName = target.Name,
                     YourItems = your
                 });
-                target.psr.SendPacket(new TradeStartPacket()
+                target.client.SendPacket(new TradeStartPacket()
                 {
                     MyItems = your,
                     YourName = this.Name,
@@ -85,7 +85,7 @@ namespace wServer.realm.entities
             else
             {
                 target.potentialTrader[this] = 1000 * 20;
-                target.psr.SendPacket(new TradeRequestedPacket()
+                target.client.SendPacket(new TradeRequestedPacket()
                 {
                     Name = Name
                 });
@@ -99,7 +99,7 @@ namespace wServer.realm.entities
             tradeTarget.tradeAccepted = false;
             this.trade = pkt.Offers;
 
-            tradeTarget.psr.SendPacket(new TradeChangedPacket()
+            tradeTarget.client.SendPacket(new TradeChangedPacket()
             {
                 Offers = this.trade
             });
@@ -111,7 +111,7 @@ namespace wServer.realm.entities
             {
                 tradeTarget.trade = pkt.YourOffers;
                 this.tradeAccepted = true;
-                tradeTarget.psr.SendPacket(new TradeAcceptedPacket()
+                tradeTarget.client.SendPacket(new TradeAcceptedPacket()
                 {
                     MyOffers = tradeTarget.trade,
                     YourOffers = this.trade
@@ -125,12 +125,12 @@ namespace wServer.realm.entities
         }
         public void CancelTrade(RealmTime time, CancelTradePacket pkt)
         {
-            this.psr.SendPacket(new TradeDonePacket()
+            this.client.SendPacket(new TradeDonePacket()
             {
                 Result = 1,
                 Message = "Trade canceled!"
             });
-            tradeTarget.psr.SendPacket(new TradeDonePacket()
+            tradeTarget.client.SendPacket(new TradeDonePacket()
             {
                 Result = 1,
                 Message = "Trade canceled!"
@@ -251,12 +251,12 @@ namespace wServer.realm.entities
             tradeTarget.UpdateCount++;
 
 
-            this.psr.SendPacket(new TradeDonePacket()
+            this.client.SendPacket(new TradeDonePacket()
             {
                 Result = 1,
                 Message = "Trade done!"
             });
-            tradeTarget.psr.SendPacket(new TradeDonePacket()
+            tradeTarget.client.SendPacket(new TradeDonePacket()
              {
                  Result = 1,
                  Message = "Trade done!"

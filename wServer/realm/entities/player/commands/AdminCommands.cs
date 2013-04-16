@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using wServer.realm.setpieces;
 using wServer.realm.worlds;
+using wServer.networking.svrPackets;
+using wServer.networking;
 
 namespace wServer.realm.entities.player.commands
 {
@@ -122,7 +124,7 @@ namespace wServer.realm.entities.player.commands
             player.Move(x + 0.5f, y + 0.5f);
             player.SetNewbiePeriod();
             player.UpdateCount++;
-            player.Owner.BroadcastPacket(new svrPackets.GotoPacket()
+            player.Owner.BroadcastPacket(new GotoPacket()
             {
                 ObjectId = player.Id,
                 Position = new Position()
@@ -150,10 +152,33 @@ namespace wServer.realm.entities.player.commands
 
     class DebugCommand : Command
     {
+        class Locater : Enemy
+        {
+            Player player;
+            public Locater(Player player)
+                : base(0x0d5d)
+            {
+                this.player = player;
+                Move(player.X, player.Y);
+                ApplyConditionEffect(new ConditionEffect()
+                {
+                    Effect = ConditionEffectIndex.Invincible,
+                    DurationMS = -1
+                });
+            }
+            public override void Tick(RealmTime time)
+            {
+                Move(player.X, player.Y);
+                UpdateCount++;
+                base.Tick(time);
+            }
+        }
+
         public DebugCommand() : base("debug", permLevel: 1) { }
 
         protected override bool Process(Player player, RealmTime time, string args)
         {
+            player.Owner.EnterWorld(new Locater(player));
             return true;
         }
     }
@@ -165,7 +190,7 @@ namespace wServer.realm.entities.player.commands
         protected override bool Process(Player player, RealmTime time, string args)
         {
             StringBuilder sb = new StringBuilder("Users online: \r\n");
-            foreach (var i in RealmManager.Clients.Values)
+            foreach (var i in player.Manager.Clients.Values)
             {
                 if (i.Stage == ProtocalStage.Disconnected) continue;
                 sb.AppendFormat("{0}#{1}@{2}\r\n",
@@ -208,7 +233,7 @@ namespace wServer.realm.entities.player.commands
 
         protected override bool Process(Player player, RealmTime time, string args)
         {
-            foreach (var i in RealmManager.Clients.Values)
+            foreach (var i in player.Manager.Clients.Values)
             {
                 if (i.Account.Name.EqualsIgnoreCase(args))
                 {
@@ -255,7 +280,7 @@ namespace wServer.realm.entities.player.commands
 
         protected override bool Process(Player player, RealmTime time, string args)
         {
-            foreach (var client in RealmManager.Clients.Values)
+            foreach (var client in player.Manager.Clients.Values)
                 client.Player.SendText("@Announcement", args);
             return true;
         }
@@ -287,7 +312,7 @@ namespace wServer.realm.entities.player.commands
 
         protected override bool Process(Player player, RealmTime time, string args)
         {
-            foreach (var i in RealmManager.Clients.Values)
+            foreach (var i in player.Manager.Clients.Values)
             {
                 if (i.Account.Name.EqualsIgnoreCase(args))
                 {

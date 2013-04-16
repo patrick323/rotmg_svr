@@ -34,7 +34,7 @@ namespace wServer.realm.entities
         public void Destroy(bool immediate)
         {
             if (!immediate)
-                RealmManager.Logic.AddPendingAction(_ => Destroy(true), PendingPriority.Destruction);
+                Manager.Logic.AddPendingAction(_ => Destroy(true), PendingPriority.Destruction);
             if (Owner != null)
             {
                 //ProjectileOwner.Projectiles[ProjectileId] = null;

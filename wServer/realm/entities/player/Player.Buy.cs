@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.cliPackets;
-using wServer.svrPackets;
+using wServer.networking.cliPackets;
+using wServer.networking.svrPackets;
 
 namespace wServer.realm.entities
 {
@@ -18,8 +18,8 @@ namespace wServer.realm.entities
 
         public void CheckCredits(CheckCreditsPacket pkt)
         {
-            psr.Database.ReadStats(psr.Account);
-            Credits = psr.Account.Credits;
+            client.Database.ReadStats(client.Account);
+            Credits = client.Account.Credits;
             UpdateCount++;
         }
     }

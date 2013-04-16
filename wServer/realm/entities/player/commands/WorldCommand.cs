@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 
 namespace wServer.realm.entities.player.commands
 {
@@ -153,7 +153,7 @@ namespace wServer.realm.entities.player.commands
                 return false;
             }
 
-            foreach (var i in RealmManager.Clients.Values)
+            foreach (var i in player.Manager.Clients.Values)
             {
                 if (i.Account.NameChosen && i.Account.Name.EqualsIgnoreCase(playername))
                 {

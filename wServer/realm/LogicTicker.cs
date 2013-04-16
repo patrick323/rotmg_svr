@@ -12,8 +12,11 @@ namespace wServer.realm
     {
         public const int TPS = 20;
         public const int MsPT = 1000 / TPS;
-        public LogicTicker()
+
+        public RealmManager Manager { get; private set; }
+        public LogicTicker(RealmManager manager)
         {
+            this.Manager = manager;
             pendings = new ConcurrentQueue<Action<RealmTime>>[5];
             for (int i = 0; i < 5; i++)
                 pendings[i] = new ConcurrentQueue<Action<RealmTime>>();
@@ -81,7 +84,7 @@ namespace wServer.realm
         void TickWorlds1(RealmTime t)    //Continous simulation
         {
             CurrentTime = t;
-            foreach (var i in RealmManager.Worlds.Values.Distinct())
+            foreach (var i in Manager.Worlds.Values.Distinct())
                 i.Tick(t);
             //if (EnableMonitor)
             //    svrMonitor.Mon.Tick(t);

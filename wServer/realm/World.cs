@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading;
 using wServer.realm.entities;
 using System.Collections.Concurrent;
+using wServer.networking;
+using wServer.realm.terrain;
 
 namespace wServer.realm
 {
@@ -35,8 +37,9 @@ namespace wServer.realm
         }
 
         public bool IsLimbo { get; protected set; }
-        public virtual World GetInstance(ClientProcessor psr) { return null; }
+        public virtual World GetInstance(Client client) { return null; }
 
+        public RealmManager Manager { get; internal set; }
         public int Id { get; internal set; }
         public string Name { get; protected set; }
 

@@ -6,12 +6,14 @@ using System.IO;
 using db;
 using wServer.realm.entities;
 using System.Collections.Concurrent;
+using wServer.networking;
+using wServer.realm.terrain;
 
 namespace wServer.realm.worlds
 {
     public class Vault : World
     {
-        public Vault(bool isLimbo, ClientProcessor psr = null)
+        public Vault(bool isLimbo, Client client = null)
         {
             Id = VAULT_ID;
             Name = "Vault";
@@ -19,15 +21,15 @@ namespace wServer.realm.worlds
             if (!(IsLimbo = isLimbo))
             {
                 base.FromWorldMap(typeof(RealmManager).Assembly.GetManifestResourceStream("wServer.realm.worlds.vault.wmap"));
-                Init(psr);
+                Init(client);
             }
         }
 
         ConcurrentDictionary<Tuple<Container, VaultChest>, int> vaultChests = new ConcurrentDictionary<Tuple<Container, VaultChest>, int>();
-        ClientProcessor psr;
-        void Init(ClientProcessor psr)
+        Client client;
+        void Init(Client client)
         {
-            this.psr = psr;
+            this.client = client;
             List<IntPoint> vaultChestPosition = new List<IntPoint>();
             IntPoint spawn = new IntPoint(0, 0);
 
@@ -46,7 +48,7 @@ namespace wServer.realm.worlds
                 (x.X - spawn.X) * (x.X - spawn.X) + (x.Y - spawn.Y) * (x.Y - spawn.Y),
                 (y.X - spawn.X) * (y.X - spawn.X) + (y.Y - spawn.Y) * (y.Y - spawn.Y)));
 
-            var chests = psr.Account.Vault.Chests;
+            var chests = client.Account.Vault.Chests;
             for (int i = 0; i < chests.Count; i++)
             {
                 Container con = new Container(0x0504, null, false);
@@ -80,9 +82,9 @@ namespace wServer.realm.worlds
             vaultChests[new Tuple<Container, VaultChest>(con, chest)] = con.UpdateCount;
         }
 
-        public override World GetInstance(ClientProcessor psr)
+        public override World GetInstance(Client client)
         {
-            return RealmManager.AddWorld(new Vault(false, psr));
+            return Manager.AddWorld(new Vault(false, client));
         }
 
         public override void Tick(RealmTime time)
@@ -94,7 +96,7 @@ namespace wServer.realm.worlds
                 if (i.Key.Item1.UpdateCount > i.Value)
                 {
                     i.Key.Item2._Items = Utils.GetCommaSepString(i.Key.Item1.Inventory.Take(8).Select(_ => _ == null ? -1 : _.ObjectType).ToArray());
-                    psr.Database.SaveChest(psr.Account, i.Key.Item2);
+                    client.Database.SaveChest(client.Account, i.Key.Item2);
                     vaultChests[i.Key] = i.Key.Item1.UpdateCount;
                 }
             }

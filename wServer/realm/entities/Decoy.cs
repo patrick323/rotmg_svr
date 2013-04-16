@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using wServer.svrPackets;
+using wServer.networking.svrPackets;
 using Mono.Game;
 using wServer.logic;
 
