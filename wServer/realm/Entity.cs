@@ -283,6 +283,7 @@ namespace wServer.realm
                     return new Enemy(id);
                 case "Portal":
                     return new Portal(id, null);
+                case "VaultChest"
                 case "ClosedVaultChest":
                 case "GuildMerchant":
                     return new SellableObject(id);
